@@ -306,7 +306,7 @@ class Session(object):
         sys_vars['mean_rewards_history'].append(mean_rewards)
         sys_vars['solved'] = solved
 
-        self.grapher.plot()
+        # self.grapher.plot()
         self.check_end()
         return sys_vars
 
@@ -573,7 +573,7 @@ def plot(experiment_or_prefix_id):
                            session_num=s, num_of_sessions=num_of_sessions)
             sys_vars = data['sys_vars_array'][s]
             sess.sys_vars = sys_vars
-            sess.grapher.plot()
+            # sess.grapher.plot()
             sess.clear_session()
 
 

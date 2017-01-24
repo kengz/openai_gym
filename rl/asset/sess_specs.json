@@ -21,9 +21,9 @@
     },
     "dev_dqn": {
         "problem": "DevCartPole-v0",
-        "Agent": "dqn.DQN",
-        "Memory": "HighLowMemoryWithForgetting",
-        "Policy": "BoltzmannPolicy",
+        "Agent": "actor_critic.ActorCritic",
+        "Memory": "LinearMemoryWithForgetting",
+        "Policy": "ActorCriticPolicy",
         "PreProcessor": "NoPreProcessor",
         "param": {
             "train_per_n_new_exp": 1,
@@ -31,8 +31,8 @@
             "gamma": 0.99,
             "hidden_layers_shape": [4],
             "hidden_layers_activation": "sigmoid",
-            "exploration_anneal_episodes": 10,
-            "epi_change_learning_rate": 5
+            "exploration_anneal_episodes": 50,
+            "epi_change_learning_rate": 300
         },
         "param_range": {
             "learning_rate": [0.01, 0.1]
@@ -115,9 +115,9 @@
     },
     "lunar_dqn": {
         "problem": "LunarLander-v2",
-        "Agent": "dqn.DQN",
-        "Memory": "HighLowMemoryWithForgetting",
-        "Policy": "EpsilonGreedyPolicy",
+        "Agent": "actor_critic.ActorCritic",
+        "Memory": "LinearMemoryWithForgetting",
+        "Policy": "ActorCriticPolicy",
         "PreProcessor": "StackStates",
         "param": {
             "train_per_n_new_exp": 5,
