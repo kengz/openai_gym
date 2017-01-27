@@ -137,6 +137,68 @@
     },
     "lunar_dqn": {
         "problem": "LunarLander-v2",
+        "Agent": "dqn.DQN",
+        "Memory": "LinearMemoryWithForgetting",
+        "Policy": "EpsilonGreedyPolicy",
+        "PreProcessor": "NoPreProcessor",
+        "param": {
+            "train_per_n_new_exp": 5,
+            "learning_rate": 0.001,
+            "batch_size": 32,
+            "gamma": 0.99,
+            "hidden_layers_shape": [300, 150, 75],
+            "hidden_layers_activation": "relu",
+            "output_layer_activation": "linear",
+            "exploration_anneal_episodes": 100,
+            "epi_change_learning_rate": 200
+        },
+        "param_range": {
+            "learning_rate": [0.005, 0.001, 0.0005, 0.0001],
+            "epi_change_learning_rate": [75, 150, 200, 250],
+            "hidden_layers_shape": [
+                [200, 100],
+                [300, 150],
+                [300, 200],
+                [300, 150, 75],
+                [400, 200],
+                [400, 200, 100],
+                [400, 300]
+            ]
+        }
+    },
+    "lunar_high_low": {
+        "problem": "LunarLander-v2",
+        "Agent": "dqn.DQN",
+        "Memory": "HighLowMemoryWithForgetting",
+        "Policy": "EpsilonGreedyPolicy",
+        "PreProcessor": "StackStates",
+        "param": {
+            "train_per_n_new_exp": 5,
+            "learning_rate": 0.001,
+            "batch_size": 32,
+            "gamma": 0.99,
+            "hidden_layers_shape": [300, 150, 75],
+            "hidden_layers_activation": "relu",
+            "output_layer_activation": "linear",
+            "exploration_anneal_episodes": 100,
+            "epi_change_learning_rate": 200
+        },
+        "param_range": {
+            "learning_rate": [0.005, 0.001, 0.0005, 0.0001],
+            "epi_change_learning_rate": [75, 150, 200, 250],
+            "hidden_layers_shape": [
+                [200, 100],
+                [300, 150],
+                [300, 200],
+                [300, 150, 75],
+                [400, 200],
+                [400, 200, 100],
+                [400, 300]
+            ]
+        }
+    },
+    "lunar_actor_critic": {
+        "problem": "LunarLander-v2",
         "Agent": "actor_critic.ActorCritic",
         "Memory": "LinearMemoryWithForgetting",
         "Policy": "ActorCriticPolicy",
