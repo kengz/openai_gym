@@ -81,7 +81,7 @@ For auto-syncing `data/` files, we use Gulp. This sets up a watcher for automati
 ```shell
 npm install --global gulp-cli
 npm install --save-dev gulp gulp-watch gulp-changed
-run the
+# run the file watcher
 gulp
 ```
 
@@ -99,7 +99,7 @@ npm run clear
 To customize your run commands, use plain python:
 
 ```shell
-python3 main.py -s lunar_dqn -b -g | tee -a ./data/terminal.log
+python3 main.py -bgp -s lunar_dqn -t 5 | tee -a ./data/terminal.log
 ```
 
 The extra flags are:
@@ -122,7 +122,7 @@ screen
 # enter the screen
 npm run remote
 # or full python command goes like
-xvfb-run -a -s "-screen 0 1400x900x24" -- python3 main.py -b | tee -a ./data/terminal.log
+xvfb-run -a -s "-screen 0 1400x900x24" -- python3 main.py -bgp -s lunar_dqn -t 5 | tee -a ./data/terminal.log
 # use Cmd+A+D to detach from screen, then Cmd+D to disconnect ssh
 # use screen -r to resume screen next time
 ```
