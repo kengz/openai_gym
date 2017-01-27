@@ -5,6 +5,7 @@ matplotlib==1.4.3
 pandas==0.18.1
 https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0rc1-py3-none-any.whl
 git+https://github.com/tflearn/tflearn.git
+git+https://github.com/Theano/Theano.git
 Keras==1.1.0
 git+https://github.com/openai/gym.git
 codeclimate-test-reporter==0.1.2
