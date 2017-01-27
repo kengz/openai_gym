@@ -8,7 +8,7 @@ from keras.optimizers import SGD
 from keras.objectives import mean_squared_error
 from keras.constraints import maxnorm
 from keras import backend as K
-from theano.tensor import nnet
+from tensorflow import nn
 
 class ActorCritic(DQN):
 
@@ -73,7 +73,7 @@ class ActorCritic(DQN):
         return self.actor.model, self.critic.model
 
     def custom_objective(self, error, y_pred):
-        y_pred_prob = nnet.nnet.softmax(y_pred)
+        y_pred_prob = nn.softmax(y_pred)
         loss = - K.log(y_pred_prob) * self.curr_actions * error
         return loss
 
