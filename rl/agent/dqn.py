@@ -4,7 +4,6 @@ from rl.util import logger, log_self
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.optimizers import SGD
-from keras.constraints import maxnorm
 
 
 class DQN(Agent):
@@ -47,16 +46,14 @@ class DQN(Agent):
         model.add(Dense(self.hidden_layers[0],
                         input_shape=(self.env_spec['state_dim'],),
                         activation=self.hidden_layers_activation,
-                        init='lecun_uniform',
-                        W_constraint=maxnorm(3)))
+                        init='lecun_uniform'))
 
         # inner hidden layer: no specification of input shape
         if (len(self.hidden_layers) > 1):
             for i in range(1, len(self.hidden_layers)):
                 model.add(Dense(self.hidden_layers[i],
                                 init='lecun_uniform',
-                                activation=self.hidden_layers_activation,
-                                W_constraint=maxnorm(3)))
+                                activation=self.hidden_layers_activation))
 
         return model
 
@@ -68,8 +65,7 @@ class DQN(Agent):
         self.build_hidden_layers(model)
         model.add(Dense(self.env_spec['action_dim'],
                         init='lecun_uniform',
-                        activation=self.output_layer_activation,
-                        W_constraint=maxnorm(3)))
+                        activation=self.output_layer_activation))
         logger.info("Model summary")
         model.summary()
         self.model = model
@@ -136,9 +132,11 @@ class DQN(Agent):
 
     def compute_Q_states(self, minibatch):
         # note the computed values below are batched in array
-        Q_states = self.model.predict(minibatch['states'])
-
-        Q_next_states = self.model.predict(minibatch['next_states'])
+        clip_val = 10000
+        Q_states = np.clip(
+            self.model.predict(minibatch['states']), -clip_val, clip_val)
+        Q_next_states = np.clip(
+            self.model.predict(minibatch['next_states']), -clip_val, clip_val)
         Q_next_states_max = np.amax(Q_next_states, axis=1)
         return (Q_states, Q_next_states_max)
 

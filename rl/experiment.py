@@ -67,6 +67,8 @@ class Grapher(object):
     '''
 
     def __init__(self, session):
+        if not args.plot_graph:
+            return
         import matplotlib.pyplot as plt
         plt.rcParams['toolbar'] = 'None'  # mute matplotlib toolbar
         self.plt = plt
@@ -118,9 +120,9 @@ class Grapher(object):
 
     def plot(self):
         '''do live plotting'''
-        sys_vars = self.session.sys_vars
-        if environ.get('CI'):
+        if not args.plot_graph or environ.get('CI'):
             return
+        sys_vars = self.session.sys_vars
         ax1, p1 = self.subgraphs['total rewards']
         p1.set_ydata(
             sys_vars['total_rewards_history'])
@@ -214,7 +216,8 @@ class Session(object):
             sys_vars['RENDER'] = False
         if environ.get('CI'):
             sys_vars['RENDER'] = False
-            sys_vars['MAX_EPISODES'] = 4
+            if self.problem != 'DevCartPole-v0':
+                sys_vars['MAX_EPISODES'] = 4
         self.sys_vars = sys_vars
         self.reset_sys_vars()
         return self.sys_vars
@@ -463,7 +466,7 @@ class Experiment(object):
             'num_of_sessions': len(sys_vars_array),
             'solved_num_of_sessions': len(solved_sys_vars_array),
             'solved_ratio_of_sessions': float(len(
-                solved_sys_vars_array)) / len(sys_vars_array),
+                solved_sys_vars_array)) / self.times,
             'mean_rewards_stats': basic_stats(mean_rewards_array),
             'mean_rewards_per_epi_stats': basic_stats(
                 mean_rewards_per_epi_array),

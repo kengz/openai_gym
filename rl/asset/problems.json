@@ -3,7 +3,7 @@
     "RENDER": true,
     "GYM_ENV_NAME": "CartPole-v0",
     "SOLVED_MEAN_REWARD": 195.0,
-    "MAX_EPISODES": 10,
+    "MAX_EPISODES": 30,
     "REWARD_MEAN_LEN": 100
   },
   "CartPole-v0": {

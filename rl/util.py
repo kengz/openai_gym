@@ -31,7 +31,7 @@ parser.add_argument("-s", "--sess",
                     action="store",
                     type=str,
                     nargs='?',
-                    dest="sess_to_run",
+                    dest="sess_name",
                     default="dev_dqn")
 parser.add_argument("-t", "--times",
                     help="number of times session is run",
@@ -49,6 +49,11 @@ parser.add_argument("-l", "--line_search",
                     help="run line search instead of grid search if present",
                     action="store_true",
                     dest="line_search",
+                    default=False)
+parser.add_argument("-g", "--graph",
+                    help="plot metrics graphs live",
+                    action="store_true",
+                    dest="plot_graph",
                     default=False)
 args = parser.parse_args([]) if environ.get('CI') else parser.parse_args()
 

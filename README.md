@@ -17,21 +17,13 @@ cd openai_gym
 python setup.py install
 ```
 
-*Note that by default it installs Tensorflow for Python3 on MacOS. [Choose the correct binary to install from TF.](https://www.tensorflow.org/versions/r0.11/get_started/os_setup.html#pip-installation)*
+*Note that by default it installs Tensorflow for Python3 on MacOS. [If you're on a different platform, choose the correct binary to install from TF.](https://www.tensorflow.org/get_started/os_setup#pip_installation)*
 
 ```shell
-# for example, TF for Python2, MacOS
-export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0rc1-py2-none-any.whl
-# or Linux CPU-only, Python3.5
-export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0rc1-cp35-cp35m-linux_x86_64.whl
+# default option
+TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.12.1-py3-none-any.whl
+# install from the TF_BINARY_URL
 sudo pip install --upgrade $TF_BINARY_URL
-```
-
-For auto file copier, we use Gulp.
-
-```shell
-npm install --global gulp-cli
-npm install --save-dev gulp gulp-watch gulp-changed
 ```
 
 ### Complete
@@ -82,79 +74,77 @@ env.render()
 
 ## Usage
 
-First run `gulp` to setup watcher for automatically copying data files.
+### Data files auto-sync (optional)
 
-Tl;dr:
+For auto-syncing `data/` files, we use Gulp. This sets up a watcher for automatically copying data files via Keybase. If you're not Keng or Laura, change the Keybase filepath in `gulpfile.js`.
 
 ```shell
-# run locally
+npm install --global gulp-cli
+npm install --save-dev gulp gulp-watch gulp-changed
+run the
+gulp
+```
+
+### Run experiments locally
+
+Configure the `"start"` scripts in `package.json` for easily running the same experiments over and over again.
+
+```shell
+# easy run command
 npm start
-# run from remote after logging in to ssh
-# launch screen first, then run
+# to clear data/
+npm run clear
+```
+
+To customize your run commands, use plain python:
+
+```shell
+python3 main.py -s lunar_dqn -b -g | tee -a ./data/terminal.log
+```
+
+The extra flags are:
+
+- `-d`: log debug info. Default: `False`
+- `-b`: blind mode, do not render graphics. Default: `False`
+- `-s <sess_name>`: specify which of `rl/asset/sess_spec.json` to run. Default: `-s dev_dqn`
+- `-t <times>`: the number of sessions to run per experiment. Default: `1`
+- `-p`: run param selection. Default: `False`
+- `-l`: use line search for param selection. Default: `False`
+- `-g`: plot graphs live. Default: `False`
+
+
+### Run experiments remotely
+
+Log in via ssh, start a screen, run, then detach screen.
+
+```shell
 screen
+# enter the screen
 npm run remote
+# or full python command goes like
+xvfb-run -a -s "-screen 0 1400x900x24" -- python3 main.py -b | tee -a ./data/terminal.log
 # use Cmd+A+D to detach from screen, then Cmd+D to disconnect ssh
 # use screen -r to resume screen next time
 ```
 
-The scripts are inside the `rl/` folder. Configure your `game_specs` in `rl/session.py`, and run
-
-```shell
-python main.py # run in normal mode
-python main.py -d # print debug log
-python main.py -b # blind, i.e. don't render graphics
-python main.py 2>&1 | tee run.log # write to log file
-```
-
-**Ubuntu Debug**: If shits still blow up with `pyglet.canvas.xlib.NoSuchDisplayException: Cannot connect to "None"` even with the `-b` no-render flag, prepend a `xvfb-run` command like so:
-
-```shell
-sudo apt-get install -y xvfb
-xvfb-run -a -s "-screen 0 1400x900x24" -- python main.py -d -b
-```
-
-Each run is an experiment, and data will be collected and written once every experiment is finished to `<date>_data_grid.json`. If rendering is enabled, it will also save the graph to `<Problem>.png`.
-
-
-### Hyperparam Selection
-
-1. Define the `game_specs.<game>.param_range` in `rl/session.py` for hyperparameter selection, which will run using multiprocessing, and return the best param (defined as having the best average session `mean_rewards`).
-
-2. Modify `main.py` to run single experiment or param selection multi experiments, each for a number of times `run(<game>, run_param_selection=False, times=1)`.
-
-3. Run `python main.py` as before. At the end it will return and print out a ranked (from the best) list of params.
-
-Note that in parallel mode, graphics will not be rendered.
-
 
 ## Development
 
-See `rl/session.py` for the main Session class. It takes the 3 arguments `Agent, problem, param`.
+This is still under active development, and documentation is sparse. The main code lives inside `rl/`.
 
-You should implement your `Agent` class in the `rl/agent/` folder. By polymorphism, your `Agent` should implement the methods shown in `rl/agent/base_agent/py`, otherwise it will throw `NotImplementedError`.
+The design of the code is clean enough to simply infer how things work by example.
 
-```python
-# see rl/agent/dqn.py for example
-def __init__(self, env_spec, *args, **kwargs):
-    super(DQN, self).__init__(env_spec)
-    # set other params for agent
-def select_action(self, state):
-    self.policy.select_action(state)
-def update(self, sys_vars):
-    self.policy.update(sys_vars)
-def to_train(self, sys_vars):
-    return True  # if train at every step
-def train(self, sys_vars):
-    # training code...
-```
+- `data/`: contains all the graphs per experiment sessions, JSON data file per experiment, and csv metrics dataframe per run of multiple experiments
+- `rl/agent/`: custom agents. Refer to `base_agent.py` and `dqn.py` to build your own
+- `rl/asset/`: specify new problems and sess_specs to run experiments for.
+- `rl/model/`: if you decide to save a model, this is the place
+- `rl/experiment.py`: the main high level experiment logic.
+- `rl/memory.py`: RL agent memory classes
+- `rl/policy.py`: RL agent policy classes
+- `rl/policy.py`: RL agent preprocessor (state and memory) classes
+- `rl/util.py`: Generic util
 
-Refer to the following Agents in `rl/agent/` for building your own:
-- `dummy.py`: dummy agent used for a gym tour. Does random actions.
-- `q_table.py`: a tabular q-learner
-- `dqn.py`: agent with a simple Deep Q-Network, forms the base `DQN` class for others to inherit
-- `double_dqn.py`: agent with Double Deep Q-Network, inherits `DQN`
-- `lunar_dqn.py`: agent with deeper network for the Lunar-Lander game, inherits `DQN`
-- `lunar_double_dqn.py`: agent with deeper network for the Lunar-Lander game, inherits `DoubleDQN`
+Each run is by specifying a `sess_name` or `sess_id`. This runs experiments sharing the same `prefix_id`. Each experiment runs multiple sessions to take the average metrics and plot graphs. At last the experiments are aggregated into a metrics dataframe, sorted by the best experiments. All these data and graphs are saved into a new folder in `data/` named with the `prefix_id`.
 
 
 ## Roadmap
