@@ -17,7 +17,7 @@ dependencies:
     - pip install pandas
   override:
     - pip install $TF_BINARY_URL
-    - pip install git+https://github.com/tflearn/tflearn.git
+    - pip install git+https://github.com/Theano/Theano.git
     - pip install keras
     - pip install git+https://github.com/openai/gym.git
     - git clone https://github.com/pybox2d/pybox2d && cd pybox2d/ && python setup.py clean && python setup.py build && python setup.py install
