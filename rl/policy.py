@@ -1,5 +1,6 @@
 import numpy as np
 from rl.util import log_self
+from keras import backend as K
 
 class Policy(object):
 
@@ -162,8 +163,6 @@ class ActorCriticPolicy(Policy):
         super(ActorCriticPolicy, self).__init__()
         log_self(self)
 
-    # TODO Change implementation to TF softmax 
-    # Needs updates elsewhere to deal with tensors
     def softmax(self, x):
         '''Subtracting large constant from each of x values to prevent overflow'''
         # max_per_row = np.amax(x, out=None, axis=1)

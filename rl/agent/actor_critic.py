@@ -8,7 +8,7 @@ from keras.optimizers import SGD
 from keras.objectives import mean_squared_error
 from keras.constraints import maxnorm
 from keras import backend as K
-from tensorflow import nn
+# from tensorflow import nn
 
 class ActorCritic(DQN):
 
@@ -16,7 +16,7 @@ class ActorCritic(DQN):
                  train_per_n_new_exp=1,
                  gamma=0.99, learning_rate=0.01,
                  epi_change_learning_rate=None,
-                 batch_size=16, n_epoch=5, hidden_layers_shape=[4],
+                 batch_size=16, n_epoch=2, hidden_layers_shape=[4],
                  hidden_layers_activation='sigmoid',
                  output_layer_activation='linear',
                  **kwargs):  # absorb generic param without breaking
@@ -33,10 +33,7 @@ class ActorCritic(DQN):
         self.actor_loss_set = False
         self.critic_opt = None
         self.critic_loss = None
-        self.curr_actions = np.zeros(self.env_spec['action_dim'])
         self.kwargs = kwargs
-        # Doesn't work with JSON
-        # log_self(self)
         self.build_ac_model()
 
     def build_ac_model(self):
@@ -73,8 +70,9 @@ class ActorCritic(DQN):
         return self.actor.model, self.critic.model
 
     def custom_objective(self, error, y_pred):
-        y_pred_prob = nn.softmax(y_pred)
-        loss = - K.log(y_pred_prob) * self.curr_actions * error
+        y_pred_prob = K.softmax(y_pred)
+        # loss = - K.log(y_pred_prob) * error
+        loss = np.divide(error, y_pred_prob)
         return loss
 
     def compile_models(self):
@@ -119,13 +117,14 @@ class ActorCritic(DQN):
             self.add_custom_objective()
             self.actor_loss_set = True
         minibatch = self.memory.rand_minibatch(self.batch_size)
-        self.curr_actions = minibatch['actions']
         curr_state_vals = self.critic.model.predict(minibatch['states'])
         next_state_vals = self.critic.model.predict(minibatch['next_states'])
         curr_targets = minibatch['rewards'] .reshape((minibatch['rewards'].shape[0], 1))+ self.gamma * next_state_vals
         error = curr_targets - curr_state_vals
         # Broadcast error to match model output dim
         error = np.broadcast_to(error, (error.shape[0], self.env_spec['action_dim']))
+        # Mask for actions not taken
+        error = np.multiply(error, minibatch['actions'])
         loss_critic = self.critic.model.train_on_batch(minibatch['states'], curr_targets)
         loss_actor = self.actor.model.train_on_batch(minibatch['states'], error)
         return loss_critic + loss_actor

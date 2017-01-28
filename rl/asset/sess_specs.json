@@ -51,8 +51,7 @@
             "gamma": 0.99,
             "hidden_layers_shape": [4],
             "hidden_layers_activation": "sigmoid",
-            "exploration_anneal_episodes": 50,
-            "epi_change_learning_rate": 300
+            "exploration_anneal_episodes": 10
         },
         "param_range": {
             "learning_rate": [0.01, 0.1],
