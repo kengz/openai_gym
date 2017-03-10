@@ -1,9 +1,6 @@
 import numpy as np
 from rl.agent.base_agent import Agent
 from rl.util import logger, log_self
-from keras.models import Sequential
-from keras.layers.core import Dense
-from keras.optimizers import SGD
 
 
 class DQN(Agent):
@@ -17,63 +14,71 @@ class DQN(Agent):
 
     def __init__(self, env_spec,
                  train_per_n_new_exp=1,
-                 gamma=0.95, learning_rate=0.1,
-                 epi_change_learning_rate=None,
-                 batch_size=16, n_epoch=5, hidden_layers_shape=[4],
+                 gamma=0.95, lr=0.1,
+                 epi_change_lr=None,
+                 batch_size=16, n_epoch=5, hidden_layers_shape=None,
                  hidden_layers_activation='sigmoid',
                  output_layer_activation='linear',
                  **kwargs):  # absorb generic param without breaking
+        # import only when needed to contain side-effects
+        from keras.layers.core import Dense
+        from keras.models import Sequential, load_model
+        self.Dense = Dense
+        self.Sequential = Sequential
+        self.load_model = load_model
+
         super(DQN, self).__init__(env_spec)
 
         self.train_per_n_new_exp = train_per_n_new_exp
         self.gamma = gamma
-        self.learning_rate = learning_rate
-        self.epi_change_learning_rate = epi_change_learning_rate
+        self.lr = lr
+        self.epi_change_lr = epi_change_lr
         self.batch_size = batch_size
         self.n_epoch = 1
         self.final_n_epoch = n_epoch
-        self.hidden_layers = hidden_layers_shape
+        self.hidden_layers = hidden_layers_shape or [4]
         self.hidden_layers_activation = hidden_layers_activation
         self.output_layer_activation = output_layer_activation
+        self.clip_val = 10000
         log_self(self)
-        self.optimizer = None
         self.build_model()
 
     def build_hidden_layers(self, model):
         '''
         build the hidden layers into model using parameter self.hidden_layers
         '''
-        model.add(Dense(self.hidden_layers[0],
-                        input_shape=(self.env_spec['state_dim'],),
-                        activation=self.hidden_layers_activation,
-                        init='lecun_uniform'))
+        model.add(self.Dense(self.hidden_layers[0],
+                             input_shape=(self.env_spec['state_dim'],),
+                             activation=self.hidden_layers_activation,
+                             init='lecun_uniform'))
 
         # inner hidden layer: no specification of input shape
         if (len(self.hidden_layers) > 1):
             for i in range(1, len(self.hidden_layers)):
-                model.add(Dense(self.hidden_layers[i],
-                                init='lecun_uniform',
-                                activation=self.hidden_layers_activation))
+                model.add(self.Dense(self.hidden_layers[i],
+                                     init='lecun_uniform',
+                                     activation=self.hidden_layers_activation))
 
         return model
 
-    def build_optimizer(self):
-        self.optimizer = SGD(lr=self.learning_rate)
-
     def build_model(self):
-        model = Sequential()
+        model = self.Sequential()
         self.build_hidden_layers(model)
-        model.add(Dense(self.env_spec['action_dim'],
-                        init='lecun_uniform',
-                        activation=self.output_layer_activation))
+        model.add(self.Dense(self.env_spec['action_dim'],
+                             init='lecun_uniform',
+                             activation=self.output_layer_activation))
         logger.info("Model summary")
         model.summary()
         self.model = model
 
-        self.build_optimizer()
-        self.model.compile(loss='mean_squared_error', optimizer=self.optimizer)
-        logger.info("Model built and compiled")
+        logger.info("Model built")
         return self.model
+
+    def compile_model(self):
+        self.model.compile(
+            loss='mean_squared_error',
+            optimizer=self.optimizer.keras_optimizer)
+        logger.info("Model compiled")
 
     def recompile_model(self, sys_vars):
         '''
@@ -81,15 +86,16 @@ class DQN(Agent):
         Currently only used for changing the learning rate
         Compiling does not affect the model weights
         '''
-        if self.epi_change_learning_rate is not None:
-            if (sys_vars['epi'] == self.epi_change_learning_rate and
+        if self.epi_change_lr is not None:
+            if (sys_vars['epi'] == self.epi_change_lr and
                     sys_vars['t'] == 0):
-                self.learning_rate = self.learning_rate / 10.0
-                self.build_optimizer()
+                self.lr = self.lr / 10.0
+                self.optimizer.change_optim_param(**{'lr': self.lr})
                 self.model.compile(
-                    loss='mean_squared_error', optimizer=self.optimizer)
+                    loss='mean_squared_error',
+                    optimizer=self.optimizer.keras_optimizer)
                 logger.info('Model recompiled with new settings: '
-                            'Learning rate: {}'.format(self.learning_rate))
+                            'Learning rate: {}'.format(self.lr))
         return self.model
 
     def update_n_epoch(self, sys_vars):
@@ -132,13 +138,12 @@ class DQN(Agent):
 
     def compute_Q_states(self, minibatch):
         # note the computed values below are batched in array
-        clip_val = 10000
-        Q_states = np.clip(
-            self.model.predict(minibatch['states']), -clip_val, clip_val)
-        Q_next_states = np.clip(
-            self.model.predict(minibatch['next_states']), -clip_val, clip_val)
+        Q_states = np.clip(self.model.predict(minibatch['states']),
+                           -self.clip_val, self.clip_val)
+        Q_next_states = np.clip(self.model.predict(minibatch['next_states']),
+                                -self.clip_val, self.clip_val)
         Q_next_states_max = np.amax(Q_next_states, axis=1)
-        return (Q_states, Q_next_states_max)
+        return (Q_states, Q_next_states, Q_next_states_max)
 
     def compute_Q_targets(self, minibatch, Q_states, Q_next_states_max):
         # make future reward 0 if exp is terminal
@@ -152,7 +157,8 @@ class DQN(Agent):
 
     def train_an_epoch(self):
         minibatch = self.memory.rand_minibatch(self.batch_size)
-        (Q_states, Q_next_states_max) = self.compute_Q_states(minibatch)
+        (Q_states, _states, Q_next_states_max) = self.compute_Q_states(
+            minibatch)
         Q_targets = self.compute_Q_targets(
             minibatch, Q_states, Q_next_states_max)
 

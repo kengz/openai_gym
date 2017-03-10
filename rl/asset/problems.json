@@ -3,49 +3,133 @@
     "RENDER": true,
     "GYM_ENV_NAME": "CartPole-v0",
     "SOLVED_MEAN_REWARD": 195.0,
-    "MAX_EPISODES": 30,
+    "MAX_EPISODES": 4,
     "REWARD_MEAN_LEN": 100
   },
   "CartPole-v0": {
     "RENDER": true,
     "GYM_ENV_NAME": "CartPole-v0",
     "SOLVED_MEAN_REWARD": 195.0,
-    "MAX_EPISODES": 150,
+    "MAX_EPISODES": 250,
+    "REWARD_MEAN_LEN": 100
+  },
+  "CartPole-v1": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "CartPole-v1",
+    "SOLVED_MEAN_REWARD": 475.0,
+    "MAX_EPISODES": 250,
+    "REWARD_MEAN_LEN": 100
+  },
+  "Acrobot-v1": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "Acrobot-v1",
+    "SOLVED_MEAN_REWARD": -80.0,
+    "MAX_EPISODES": 10000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "Pendulum-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "Pendulum-v0",
+    "SOLVED_MEAN_REWARD": -100.0,
+    "MAX_EPISODES": 10000,
     "REWARD_MEAN_LEN": 100
   },
   "MountainCar-v0": {
     "RENDER": true,
     "GYM_ENV_NAME": "MountainCar-v0",
     "SOLVED_MEAN_REWARD": -110.0,
-    "MAX_EPISODES": 400,
+    "MAX_EPISODES": 800,
     "REWARD_MEAN_LEN": 100
   },
   "LunarLander-v2": {
     "RENDER": true,
     "GYM_ENV_NAME": "LunarLander-v2",
-    "SOLVED_MEAN_REWARD": 200,
-    "MAX_EPISODES": 600,
+    "SOLVED_MEAN_REWARD": 200.0,
+    "MAX_EPISODES": 400,
+    "REWARD_MEAN_LEN": 100
+  },
+  "BipedalWalker-v2": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "BipedalWalker-v2",
+    "SOLVED_MEAN_REWARD": 300.0,
+    "MAX_EPISODES": 8000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "BipedalWalkerHardcore-v2": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "BipedalWalkerHardcore-v2",
+    "SOLVED_MEAN_REWARD": 300.0,
+    "MAX_EPISODES": 8000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "CarRacing-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "CarRacing-v0",
+    "SOLVED_MEAN_REWARD": 900.0,
+    "MAX_EPISODES": 8000,
     "REWARD_MEAN_LEN": 100
   },
   "AirRaid-v0": {
     "RENDER": true,
     "GYM_ENV_NAME": "AirRaid-v0",
-    "SOLVED_MEAN_REWARD": 500,
+    "SOLVED_MEAN_REWARD": 500.0,
     "MAX_EPISODES": 5000,
     "REWARD_MEAN_LEN": 100
   },
   "Breakout-v0": {
     "RENDER": true,
     "GYM_ENV_NAME": "Breakout-v0",
-    "SOLVED_MEAN_REWARD": 300,
+    "SOLVED_MEAN_REWARD": 500.0,
     "MAX_EPISODES": 5000,
     "REWARD_MEAN_LEN": 100
   },
   "MsPacman-v0": {
     "RENDER": true,
     "GYM_ENV_NAME": "MsPacman-v0",
-    "SOLVED_MEAN_REWARD": 1000,
+    "SOLVED_MEAN_REWARD": 1000.0,
     "MAX_EPISODES": 5000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "Pong-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "Pong-v0",
+    "SOLVED_MEAN_REWARD": 15.0,
+    "MAX_EPISODES": 5000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "Qbert-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "Qbert-v0",
+    "SOLVED_MEAN_REWARD": 1000.0,
+    "MAX_EPISODES": 5000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "SpaceInvader-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "SpaceInvader-v0",
+    "SOLVED_MEAN_REWARD": 1000.0,
+    "MAX_EPISODES": 5000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "SpaceInvader-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "SpaceInvader-v0",
+    "SOLVED_MEAN_REWARD": 1000.0,
+    "MAX_EPISODES": 5000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "FlappyBird-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "FlappyBird-v0",
+    "SOLVED_MEAN_REWARD": 50.0,
+    "MAX_EPISODES": 1000,
+    "REWARD_MEAN_LEN": 100
+  },
+  "Snake-v0": {
+    "RENDER": true,
+    "GYM_ENV_NAME": "Snake-v0",
+    "SOLVED_MEAN_REWARD": 10.0,
+    "MAX_EPISODES": 1000,
     "REWARD_MEAN_LEN": 100
   }
 }

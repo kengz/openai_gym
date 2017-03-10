@@ -1,0 +1,113 @@
+#!/bin/bash
+# This script runs the same sequence as the CircleCI build
+
+# Fail on the first error; killable by SIGINT
+set -e
+trap "exit" INT
+
+# copy keys file if not already exist
+BIN_DIR=`pwd`/bin
+$BIN_DIR/copy-config
+
+# install system dependencies
+if [ $(uname) == "Darwin" ]; then
+  if which brew >/dev/null; then
+    echo "Brew is already installed"
+  else
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  fi
+else
+  sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
+  sudo apt-get install -y gcc-4.9 g++-4.9 libhdf5-dev libopenblas-dev git
+fi
+
+# install python
+if which python3 >/dev/null; then
+  echo "Python3 is already installed"
+else
+  if [ $(uname) == "Darwin" ]; then
+    brew install python3
+  else
+    sudo apt-get -y install python3-dev python3-pip python3-setuptools
+  fi
+fi
+
+# install nodejs (for npm and file watcher)
+if which node >/dev/null; then
+  echo "Nodejs is already installed"
+else
+  if [ $(uname) == "Darwin" ]; then
+    brew install node
+  else
+    curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+  fi
+fi
+
+# install npm modules
+if [ -d ./node_modules ]; then
+  echo "Npm modules already installed"
+else
+  npm install
+  sudo npm i -g grunt-cli
+fi
+
+# install noti
+if [ $(uname) == "Darwin" ]; then
+  curl -L https://github.com/variadico/noti/releases/download/v2.5.0/noti2.5.0.darwin-amd64.tar.gz | tar -xz
+  sudo mv noti /usr/local/bin/
+else
+  curl -L https://github.com/variadico/noti/releases/download/v2.5.0/noti2.5.0.linux-amd64.tar.gz | tar -xz
+  sudo mv noti /usr/bin/
+fi
+
+# install common dependencies from from
+sudo python3 -m pip install -U pip
+sudo python3 -m pip install six
+sudo python3 -m pip install h5py
+sudo python3 -m pip install numpy
+sudo python3 -m pip install scipy
+sudo python3 -m pip install matplotlib
+sudo python3 -m pip install seaborn
+sudo python3 -m pip install pandas
+sudo python3 -m pip install atari_py
+sudo python3 -m pip install Pillow
+sudo python3 -m pip install PyOpenGL
+sudo python3 -m pip install glances
+sudo python3 -m pip install mem_top
+sudo python3 -m pip install pytest-cov
+sudo python3 -m pip install codacy-coverage
+
+# install tensorflow
+if [ $(uname) == "Darwin" ]; then
+  sudo python3 -m pip install tensorflow
+else
+  sudo python3 -m pip install tensorflow-gpu
+fi
+python3 -c "import tensorflow; print('tensorflow version:'); print(tensorflow.__version__)"
+
+# install theano
+if which clang >/dev/null; then
+  echo "clang is already installed"
+else
+  if [ $(uname) == "Darwin" ]; then
+    brew install --with-clang llvm
+  fi
+fi
+# sudo pip3 install --upgrade --no-deps git+git://github.com/Theano/Theano.git
+sudo python3 -m pip install theano==0.8.2
+python3 -c "import theano; print('theano version:'); print(theano.__version__)"
+
+# install keras
+sudo python3 -m pip install keras
+
+# install full openai gym
+if [ $(uname) == "Darwin" ]; then
+  brew install cmake boost boost-python sdl2 swig wget
+else
+  sudo apt-get install -y cmake zlib1g-dev libjpeg-dev xvfb libav-tools xorg-dev python-opengl libboost-all-dev libsdl2-dev swig
+fi
+git clone https://github.com/openai/gym.git && cd gym && sudo python3 -m pip install -e .[all] && cd ..
+git clone https://github.com/pybox2d/pybox2d && cd pybox2d/ && sudo python3 setup.py clean && sudo python3 setup.py build && sudo python3 setup.py install && cd ..
+python3 -c "import gym; gym.make('LunarLander-v2')"
+python3 -c "import gym; gym.make('SpaceInvaders-v0')"

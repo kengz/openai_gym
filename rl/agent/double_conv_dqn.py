@@ -1,16 +1,16 @@
+from rl.agent.conv_dqn import ConvDQN
 import numpy as np
-from rl.agent.dqn import DQN
 from rl.util import logger
 
 
-class DoubleDQN(DQN):
+class DoubleConvDQN(ConvDQN):
 
     '''
-    The base class of double DQNs
+    The base class of double convolutional DQNs
     '''
 
     def build_model(self):
-        super(DoubleDQN, self).build_model()
+        super(DoubleConvDQN, self).build_model()
 
         model2 = self.Sequential.from_config(self.model.get_config())
         logger.info("Model 2 summary")
@@ -31,7 +31,7 @@ class DoubleDQN(DQN):
 
     def compute_Q_states(self, minibatch):
         (Q_states, Q_next_states_select, _max) = super(
-            DoubleDQN, self).compute_Q_states(minibatch)
+            DoubleConvDQN, self).compute_Q_states(minibatch)
         # Different from (single) dqn: Select max using model 2
         Q_next_states_max_ind = np.argmax(Q_next_states_select, axis=1)
         # same as dqn again, but use Q_next_states_max_ind above
@@ -51,4 +51,4 @@ class DoubleDQN(DQN):
 
     def train_an_epoch(self):
         self.switch_models()
-        return super(DoubleDQN, self).train_an_epoch()
+        return super(DoubleConvDQN, self).train_an_epoch()

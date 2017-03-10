@@ -1,4 +1,4 @@
-from util import logger
+from rl.util import logger
 
 
 class Agent(object):
@@ -11,20 +11,27 @@ class Agent(object):
                  **kwargs):  # absorb generic param without breaking
         self.env_spec = env_spec
 
-    def compile(self, memory, policy, preprocessor):
+    def compile(self, memory, optimizer, policy, preprocessor):
         # set 2 way references
         self.memory = memory
+        self.optimizer = optimizer
         self.policy = policy
         self.preprocessor = preprocessor
         # back references
         setattr(memory, 'agent', self)
+        setattr(optimizer, 'agent', self)
         setattr(policy, 'agent', self)
         setattr(preprocessor, 'agent', self)
+        self.compile_model()
         logger.info(
-            'Compiled:\nAgent, Memory, Policy, Preprocessor:\n{}'.format(
-                ', '.join([comp.__class__.__name__ for comp in [
-                    self, memory, policy, preprocessor]])
+            'Compiled:\nAgent, Memory, Optimizer, Policy, '
+            'Preprocessor:\n{}'.format(
+                ', '.join([comp.__class__.__name__ for comp in
+                           [self, memory, optimizer, policy, preprocessor]])
             ))
+
+    def compile_model(self):
+        raise NotImplementedError()
 
     def select_action(self, state):
         self.policy.select_action(state)
