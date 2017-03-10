@@ -37,7 +37,10 @@
       "gamma": 0.99,
       "hidden_layers_shape": [32],
       "hidden_layers_activation": "sigmoid",
-      "exploration_anneal_episodes": 10
+      "exploration_anneal_episodes": 10,
+      "auto_architecture":  false,
+      "num_hidden_layers" : 3,
+      "size_first_hidden_layer" : 512
     },
     "param_range": {
       "gamma": [0.97, 0.99],

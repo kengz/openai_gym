@@ -1,4 +1,38 @@
 {
+   "dev_conv_dqn": {
+    "problem": "Dev-Breakout-v0",
+    "Agent": "ConvDQN",
+    "HyperOptimizer": "GridSearch",
+    "Memory": "LongLinearMemoryWithForgetting",
+    "Optimizer": "AdamOptimizer",
+    "Policy": "EpsilonGreedyPolicy",
+    "PreProcessor": "Atari",
+    "param": {
+      "train_per_n_new_exp": 4,
+      "lr": 0.001,
+      "batch_size": 32,
+      "gamma": 0.99,
+      "hidden_layers_shape": [
+        [16, 8, 8, [4, 4]],
+        [32, 4, 4, [2, 2]]
+      ],
+      "hidden_layers_activation": "relu",
+      "exploration_anneal_episodes": 5000,
+      "epi_change_lr": 5000,
+      "auto_architecture":  true,
+      "num_hidden_layers" : 3,
+      "num_initial_channels" : 8
+    },
+    "param_range": {
+      "lr": [0.001, 0.0001],
+      "hidden_layers_shape": [
+        [
+          [16, 8, 8, [4, 4]],
+          [32, 4, 4, [2, 2]]
+        ]
+      ]
+    }
+  },
   "breakout_dqn": {
     "problem": "Breakout-v0",
     "Agent": "ConvDQN",
