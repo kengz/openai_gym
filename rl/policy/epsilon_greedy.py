@@ -1,7 +1,6 @@
 import numpy as np
 from rl.policy.base_policy import Policy
 from rl.util import log_self
-from keras import backend as K
 
 class EpsilonGreedyPolicy(Policy):
 

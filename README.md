@@ -26,16 +26,7 @@ Each experiment involves:
 - a problem - an [OpenAI Gym environment](https://gym.openai.com/envs)
 - a RL agent with modular components `agent, memory, optimizer, policy, preprocessor`, each of which is an experimental variable.
 
-<<<<<<< HEAD
-```shell
-npm install --global gulp-cli
-npm install --save-dev gulp gulp-watch gulp-changed
-# run the file watcher
-gulp
-```
-=======
 We specify input parameters for the experimental variable, run the experiment, record and analyze the data, conclude if the agent solves the problem with high rewards.
->>>>>>> master
 
 ### Specify Experiment
 
@@ -83,13 +74,7 @@ The example below is fully specified in `rl/asset/experiment_specs.json` under `
     - `NoPreProcessor`
 - *parameter variables values*: the `"param_range"` JSON
 
-<<<<<<< HEAD
-```shell
-python3 main.py -bgp -s lunar_dqn -t 5 | tee -a ./data/terminal.log
-```
-=======
 An **experiment** will run a trial for each combination of `param` values; each **trial** will run for multiple repeated **sessions**. For `dqn`, there are `96` param combinations (trials), and `5` repeated sessions per trial. Overall, this experiment will run `96 x 5 = 480` sessions.
->>>>>>> master
 
 
 ### Lab Workflow
@@ -102,20 +87,6 @@ The workflow to setup this experiment is as follow:
 4. Run `grunt -prod`
 5. Analyze the graphs and data (live-synced)
 
-<<<<<<< HEAD
-Log in via ssh, start a screen, run, then detach screen.
-
-```shell
-screen
-# enter the screen
-npm run remote
-# or full python command goes like
-xvfb-run -a -s "-screen 0 1400x900x24" -- python3 main.py -bgp -s lunar_dqn -t 5 | tee -a ./data/terminal.log
-# use Cmd+A+D to detach from screen, then Cmd+D to disconnect ssh
-# use screen -r to resume screen next time
-```
-=======
->>>>>>> master
 
 ### Lab Results
 
