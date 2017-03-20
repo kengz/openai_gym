@@ -108,9 +108,6 @@ class DDPG(DQN):
         self.critic_action_grads = self.K.tf.gradients(
             self.critic.output, self.critic_action)
 
-        # self.actor.compile(
-        #     loss='mse',
-        #     optimizer=self.optimizer.actor_keras_optimizer)
         self.target_actor.compile(
             loss='mse',
             optimizer=self.optimizer.target_actor_keras_optimizer)
