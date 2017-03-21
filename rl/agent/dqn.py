@@ -78,6 +78,7 @@ class DQN(Agent):
             model.add(self.Dense(self.hidden_layers[0],
                                  input_shape=(self.env_spec['state_dim'],),
                                  activation=self.hidden_layers_activation,
+                                 # use_bias=True,
                                  init='lecun_uniform'))
             # inner hidden layer: no specification of input shape
             if (len(self.hidden_layers) > 1):
@@ -85,6 +86,7 @@ class DQN(Agent):
                     model.add(self.Dense(
                         self.hidden_layers[i],
                         init='lecun_uniform',
+                        use_bias=True,
                         activation=self.hidden_layers_activation))
 
         return model

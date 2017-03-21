@@ -44,7 +44,8 @@ class DDPG(DQN):
         self.build_hidden_layers(model)
         model.add(self.Dense(self.env_spec['action_dim'],
                              init='lecun_uniform',
-                             activation=self.output_layer_activation))
+                             # activation=self.output_layer_activation))
+                             activation='tanh'))
         logger.info('Actor model summary')
         model.summary()
         self.actor = model
@@ -75,6 +76,7 @@ class DDPG(DQN):
                 model.add(self.Dense(
                     self.hidden_layers[i],
                     init='lecun_uniform',
+                    use_bias=True,
                     activation=self.hidden_layers_activation))
 
         model.add(self.Dense(1,

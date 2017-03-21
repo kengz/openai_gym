@@ -127,15 +127,11 @@
     "PreProcessor": "NoPreProcessor",
     "param": {
       "lr": 0.01,
-      "decay": 0.0,
-      "gamma": 0.99,
+      "gamma": 0.999,
       "hidden_layers": [64],
-      "hidden_layers_activation": "sigmoid",
+      "hidden_layers_activation": "relu",
       "output_layer_activation": "linear",
-      "exploration_anneal_episodes": 10,
-      "auto_architecture": false,
-      "num_hidden_layers": 3,
-      "first_hidden_layer_size": 512
+      "exploration_anneal_episodes": 10
     },
     "param_range": {
       "gamma": [0.97, 0.99],
