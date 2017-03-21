@@ -19,7 +19,7 @@
       "epi_change_lr": 200
     },
     "param_range": {
-      "lr": [0.001, 0.005, 0.01, 0.02],
+      "lr": [0.0005, 0.001, 0.005, 0.01, 0.02],
       "gamma": [0.95, 0.97, 0.99, 0.999],
       "hidden_layers": [
         [400, 200],
@@ -81,19 +81,19 @@
       "lr": 0.001,
       "gamma": 0.99,
       "hidden_layers": [300, 150, 75],
-      "hidden_layers_activation": "relu",
+      "hidden_layers_activation": "sigmoid",
       "output_layer_activation": "linear",
       "exploration_anneal_episodes": 150,
       "epi_change_lr": 200
     },
     "param_range": {
-      "lr": [0.0001, 0.0005, 0.001, 0.005],
-      "gamma": [0.97, 0.99, 0.999],
+      "lr": [0.0005, 0.001, 0.005, 0.01, 0.02],
+      "gamma": [0.95, 0.97, 0.99, 0.999],
       "hidden_layers": [
-        [200, 100],
         [400, 200],
-        [300, 150, 75],
-        [400, 200, 100]
+        [800, 400],
+        [400, 200, 100],
+        [400, 200, 100, 50]
       ]
     }
   },
