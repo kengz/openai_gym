@@ -9,7 +9,7 @@
     "PreProcessor": "NoPreProcessor",
     "param": {
       "lr": 0.02,
-      "gamma": 0.999,
+      "gamma": 0.99,
       "hidden_layers": [64],
       "hidden_layers_activation": "sigmoid",
       "exploration_anneal_episodes": 10
@@ -70,9 +70,9 @@
     "Policy": "DoubleDQNBoltzmannPolicy",
     "PreProcessor": "NoPreProcessor",
     "param": {
-      "lr": 0.001,
+      "lr": 0.02,
       "gamma": 0.99,
-      "hidden_layers": [32],
+      "hidden_layers": [64],
       "hidden_layers_activation": "sigmoid",
       "exploration_anneal_episodes": 10
     },
