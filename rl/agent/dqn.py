@@ -86,7 +86,7 @@ class DQN(Agent):
                     model.add(self.Dense(
                         self.hidden_layers[i],
                         init='lecun_uniform',
-                        use_bias=True,
+                        # use_bias=True,
                         activation=self.hidden_layers_activation))
 
         return model

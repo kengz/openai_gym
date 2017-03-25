@@ -1,5 +1,7 @@
 from rl.agent.dqn import DQN
-from rl.util import logger, clone_model, clone_optimizer
+from rl.util import logger, clone_model, clone_optimizer, ddpg_weight_init
+import math
+
 
 
 class DDPG(DQN):
@@ -15,13 +17,19 @@ class DDPG(DQN):
         from keras.layers import Dense, Merge
         from keras.models import Sequential
         from keras import backend as K
+        from keras.initializations import uniform
         self.Dense = Dense
         self.Merge = Merge
         self.Sequential = Sequential
+        self.uniform = uniform
         self.K = K
+        import tensorflow as tf
+        sess = tf.Session()
+        K.set_session(sess)
 
-        self.TAU = 0.001  # for target network updates
+        self.TAU = 0.01  # for target network updates
         super(DDPG, self).__init__(*args, **kwargs)
+        self.lr_actor = self.lr / 10.
 
     def compile(self, memory, optimizer, policy, preprocessor):
         # override to make 4 optimizers
@@ -43,7 +51,7 @@ class DDPG(DQN):
         model = self.Sequential()
         self.build_hidden_layers(model)
         model.add(self.Dense(self.env_spec['action_dim'],
-                             init='lecun_uniform',
+                             init='ddpg_weight_init',
                              # activation=self.output_layer_activation))
                              activation='tanh'))
         logger.info('Actor model summary')
@@ -54,11 +62,16 @@ class DDPG(DQN):
     def build_critic_models(self):
         state_branch = self.Sequential()
         state_branch.add(self.Dense(
-            self.hidden_layers[0],
+            math.floor(self.hidden_layers[0] * 1.25),
             input_shape=(self.env_spec['state_dim'],),
             activation=self.hidden_layers_activation,
             init='lecun_uniform'))
+        state_branch.add(self.Dense(
+            self.hidden_layers[0],
+            activation=self.hidden_layers_activation,
+            init='lecun_uniform'))
 
+        # add action branch to second layer of the network
         action_branch = self.Sequential()
         action_branch.add(self.Dense(
             self.hidden_layers[0],
@@ -75,12 +88,12 @@ class DDPG(DQN):
             for i in range(1, len(self.hidden_layers)):
                 model.add(self.Dense(
                     self.hidden_layers[i],
-                    init='lecun_uniform',
-                    use_bias=True,
+                    # init='lecun_uniform',
+                    # use_bias=True,
                     activation=self.hidden_layers_activation))
 
         model.add(self.Dense(1,
-                             init='lecun_uniform',
+                             init='ddpg_weight_init',
                              activation=self.output_layer_activation))
         logger.info('Critic model summary')
         model.summary()
@@ -102,7 +115,7 @@ class DDPG(DQN):
             self.actor.output, self.actor.trainable_weights,
             -self.action_gradient)
         self.actor_optimize = self.K.tf.train.AdamOptimizer(
-            self.lr).apply_gradients(
+            self.lr_actor).apply_gradients(
             zip(self.actor_grads, self.actor.trainable_weights))
 
         self.critic_state = self.critic.inputs[0]
@@ -137,18 +150,28 @@ class DDPG(DQN):
             (1 - minibatch['terminals']) * Q_prime
         critic_loss = self.critic.train_on_batch(
             [minibatch['states'], minibatch['actions']], y)
+
+        # print("ACTOR AND CRITIC INPUTS")
+        # print(self.critic.inputs)
+        # print(self.actor.inputs)
+
         return critic_loss
 
     def train_actor(self, minibatch):
         '''update actor network using sampled gradient'''
         actions = self.actor.predict(minibatch['states'])
+        # print("ACTIONS")
+        # print(actions)
+        # print("=====================")
         # critic_grads = critic.gradients(minibatch['states'], actions)
         critic_grads = self.K.get_session().run(
             self.critic_action_grads, feed_dict={
                 self.critic_state: minibatch['states'],
                 self.critic_action: actions
             })[0]
-
+        # print("CRITIC GRADS")
+        # print(critic_grads)
+        # print("=====================")
         # actor.train(minibatch['states'], critic_grads)
         self.K.get_session().run(self.actor_optimize, feed_dict={
             self.actor_state: minibatch['states'],
@@ -175,9 +198,16 @@ class DDPG(DQN):
 
     def train_an_epoch(self):
         minibatch = self.memory.rand_minibatch(self.batch_size)
+        # print("MINIBATCH STATES")
+        # print(minibatch['states'])
+        # print("=====================")
         critic_loss = self.train_critic(minibatch)
         actor_loss = self.train_actor(minibatch)
         self.train_target_networks()
 
         loss = critic_loss + actor_loss
+        # print("ACTOR LOSS")
+        # print(actor_loss)
+        # print("CRITIC LOSS")
+        # print(critic_loss)
         return loss

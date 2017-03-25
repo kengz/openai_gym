@@ -10,6 +10,8 @@ import sys
 from datetime import datetime, timedelta
 from os import path, listdir, environ, getpid
 from textwrap import wrap
+from keras.initializations import uniform
+from keras import initializations
 
 PARALLEL_PROCESS_NUM = mp.cpu_count()
 TIMESTAMP_REGEX = r'(\d{4}_\d{2}_\d{2}_\d{6})'
@@ -424,6 +426,10 @@ def clone_model(model, custom_objects=None):
     clone.set_weights(model.get_weights())
     return clone
 
+def ddpg_weight_init(shape, name):
+    return uniform(shape, scale=0.003, name=name)
+
+setattr(initializations, 'ddpg_weight_init', ddpg_weight_init)
 
 # clone a keras optimizer without file I/O
 def clone_optimizer(optimizer):
@@ -437,3 +443,4 @@ def clone_optimizer(optimizer):
     }
     clone = optimizer_from_config(config)
     return clone
+
