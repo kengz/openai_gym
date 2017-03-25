@@ -151,27 +151,16 @@ class DDPG(DQN):
         critic_loss = self.critic.train_on_batch(
             [minibatch['states'], minibatch['actions']], y)
 
-        # print("ACTOR AND CRITIC INPUTS")
-        # print(self.critic.inputs)
-        # print(self.actor.inputs)
-
         return critic_loss
 
     def train_actor(self, minibatch):
         '''update actor network using sampled gradient'''
         actions = self.actor.predict(minibatch['states'])
-        # print("ACTIONS")
-        # print(actions)
-        # print("=====================")
-        # critic_grads = critic.gradients(minibatch['states'], actions)
         critic_grads = self.K.get_session().run(
             self.critic_action_grads, feed_dict={
                 self.critic_state: minibatch['states'],
                 self.critic_action: actions
             })[0]
-        # print("CRITIC GRADS")
-        # print(critic_grads)
-        # print("=====================")
         # actor.train(minibatch['states'], critic_grads)
         self.K.get_session().run(self.actor_optimize, feed_dict={
             self.actor_state: minibatch['states'],
@@ -198,16 +187,9 @@ class DDPG(DQN):
 
     def train_an_epoch(self):
         minibatch = self.memory.rand_minibatch(self.batch_size)
-        # print("MINIBATCH STATES")
-        # print(minibatch['states'])
-        # print("=====================")
         critic_loss = self.train_critic(minibatch)
         actor_loss = self.train_actor(minibatch)
         self.train_target_networks()
 
         loss = critic_loss + actor_loss
-        # print("ACTOR LOSS")
-        # print(actor_loss)
-        # print("CRITIC LOSS")
-        # print(critic_loss)
         return loss
