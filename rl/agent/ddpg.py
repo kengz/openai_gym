@@ -1,5 +1,5 @@
 from rl.agent.dqn import DQN
-from rl.util import logger, clone_model, clone_optimizer, ddpg_weight_init
+from rl.util import logger, clone_model, clone_optimizer, ddpg_weight_init, tanh2
 import math
 
 
@@ -27,7 +27,7 @@ class DDPG(DQN):
         sess = tf.Session()
         K.set_session(sess)
 
-        self.TAU = 0.01  # for target network updates
+        self.TAU = 0.001  # for target network updates
         super(DDPG, self).__init__(*args, **kwargs)
         self.lr_actor = self.lr / 10.
 
@@ -53,7 +53,7 @@ class DDPG(DQN):
         model.add(self.Dense(self.env_spec['action_dim'],
                              init='ddpg_weight_init',
                              # activation=self.output_layer_activation))
-                             activation='tanh'))
+                             activation='tanh2'))
         logger.info('Actor model summary')
         model.summary()
         self.actor = model
@@ -62,22 +62,22 @@ class DDPG(DQN):
     def build_critic_models(self):
         state_branch = self.Sequential()
         state_branch.add(self.Dense(
-            math.floor(self.hidden_layers[0] * 1.25),
+            self.hidden_layers[0] if len(self.hidden_layers) > 1 else math.floor(self.hidden_layers[0]  * 1.25),
             input_shape=(self.env_spec['state_dim'],),
             activation=self.hidden_layers_activation,
-            init='lecun_uniform'))
+            init='ddpg_weight_init'))
         state_branch.add(self.Dense(
-            self.hidden_layers[0],
+            self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             activation=self.hidden_layers_activation,
-            init='lecun_uniform'))
+            init='ddpg_weight_init'))
 
         # add action branch to second layer of the network
         action_branch = self.Sequential()
         action_branch.add(self.Dense(
-            self.hidden_layers[0],
+            self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             input_shape=(self.env_spec['action_dim'],),
             activation=self.hidden_layers_activation,
-            init='lecun_uniform'))
+            init='ddpg_weight_init'))
 
         input_layer = self.Merge([state_branch, action_branch], mode='concat')
 
@@ -85,10 +85,10 @@ class DDPG(DQN):
         model.add(input_layer)
 
         if (len(self.hidden_layers) > 1):
-            for i in range(1, len(self.hidden_layers)):
+            for i in range(2, len(self.hidden_layers)):
                 model.add(self.Dense(
                     self.hidden_layers[i],
-                    # init='lecun_uniform',
+                    init='ddpg_weight_init',
                     # use_bias=True,
                     activation=self.hidden_layers_activation))
 
