@@ -150,7 +150,7 @@
     "problem": "Pendulum-v0",
     "Agent": "DDPG",
     "HyperOptimizer": "GridSearch",
-    "Memory": "LongLinearMemoryWithForgetting",
+    "Memory": "LinearMemoryWithForgetting",
     "Optimizer": "AdamOptimizer",
     "Policy": "OUNoise",
     "PreProcessor": "NoPreProcessor",
