@@ -47,11 +47,11 @@ class DDPG(DQN):
 
         super(DDPG, self).compile(memory, self.optimizer, policy, preprocessor)
 
-    def build_actor_models(self):
+    def build_actor_models(self, weight_init):
         model = self.Sequential()
-        self.build_hidden_layers(model)
+        self.build_hidden_layers(model, weight_init)
         model.add(self.Dense(self.env_spec['action_dim'],
-                             init='ddpg_weight_init',
+                             init=weight_init,
                              # activation=self.output_layer_activation))
                              activation='tanh2'))
         logger.info('Actor model summary')
@@ -59,17 +59,17 @@ class DDPG(DQN):
         self.actor = model
         self.target_actor = clone_model(self.actor)
 
-    def build_critic_models(self):
+    def build_critic_models(self, weight_init):
         state_branch = self.Sequential()
         state_branch.add(self.Dense(
             self.hidden_layers[0] if len(self.hidden_layers) > 1 else math.floor(self.hidden_layers[0]  * 1.25),
             input_shape=(self.env_spec['state_dim'],),
             activation=self.hidden_layers_activation,
-            init='ddpg_weight_init'))
+            init=weight_init))
         state_branch.add(self.Dense(
             self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             activation=self.hidden_layers_activation,
-            init='ddpg_weight_init'))
+            init=weight_init))
 
         # add action branch to second layer of the network
         action_branch = self.Sequential()
@@ -77,7 +77,7 @@ class DDPG(DQN):
             self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             input_shape=(self.env_spec['action_dim'],),
             activation=self.hidden_layers_activation,
-            init='ddpg_weight_init'))
+            init=weight_init))
 
         input_layer = self.Merge([state_branch, action_branch], mode='concat')
 
@@ -88,12 +88,12 @@ class DDPG(DQN):
             for i in range(2, len(self.hidden_layers)):
                 model.add(self.Dense(
                     self.hidden_layers[i],
-                    init='ddpg_weight_init',
+                    init=weight_init,
                     # use_bias=True,
                     activation=self.hidden_layers_activation))
 
         model.add(self.Dense(1,
-                             init='ddpg_weight_init',
+                             init=weight_init,
                              activation=self.output_layer_activation))
         logger.info('Critic model summary')
         model.summary()
@@ -101,8 +101,8 @@ class DDPG(DQN):
         self.target_critic = clone_model(self.critic)
 
     def build_model(self):
-        self.build_actor_models()
-        self.build_critic_models()
+        self.build_actor_models(self.weight_init)
+        self.build_critic_models(self.weight_init)
 
     def custom_critic_loss(self, y_true, y_pred):
         return self.K.mean(self.K.square(y_true - y_pred))

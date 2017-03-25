@@ -146,7 +146,7 @@
       ]
     }
   },
-  "dev-pendulum": {
+  "dev_pendulum": {
     "problem": "Pendulum-v0",
     "Agent": "DDPG",
     "HyperOptimizer": "GridSearch",
@@ -162,7 +162,8 @@
       "n_epoch": 1,
       "hidden_layers_activation": "relu",
       "output_layer_activation": "linear",
-      "exploration_anneal_episodes": 50
+      "exploration_anneal_episodes": 50,
+      "weight_init" : "ddpg_weight_init"
     },
     "param_range": {
       "gamma": [0.97, 0.98, 0.99],
