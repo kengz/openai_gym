@@ -148,11 +148,11 @@
   },
   "dev_pendulum": {
     "problem": "Pendulum-v0",
-    "Agent": "DDPG",
+    "Agent": "DDPGTF",
     "HyperOptimizer": "GridSearch",
-    "Memory": "LinearMemoryWithForgetting",
+    "Memory": "LinearMemory",
     "Optimizer": "AdamOptimizer",
-    "Policy": "OUNoise",
+    "Policy": "SimpleNoise",
     "PreProcessor": "NoPreProcessor",
     "param": {
       "lr": 0.001,

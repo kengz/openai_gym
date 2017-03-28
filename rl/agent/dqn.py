@@ -1,6 +1,7 @@
 import numpy as np
+np.random.seed(1234)
 from rl.agent.base_agent import Agent
-from rl.util import logger, log_self
+from rl.util import logger, log_self, normal_02
 
 
 class DQN(Agent):

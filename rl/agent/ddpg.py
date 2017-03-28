@@ -1,5 +1,5 @@
 from rl.agent.dqn import DQN
-from rl.util import logger, clone_model, clone_optimizer, ddpg_weight_init, tanh2
+from rl.util import logger, clone_model, clone_optimizer, ddpg_weight_init, tanh2, normal_02
 import math
 
 
@@ -14,6 +14,8 @@ class DDPG(DQN):
 
     def __init__(self, *args, **kwargs):
         # import only when needed to contain side-effects
+        import numpy as np
+        np.random.seed(1234)
         from keras.layers import Dense, Merge
         from keras.models import Sequential
         from keras import backend as K
@@ -24,12 +26,16 @@ class DDPG(DQN):
         self.uniform = uniform
         self.K = K
         import tensorflow as tf
-        sess = tf.Session()
-        K.set_session(sess)
+        self.tf = tf
+        self.tf.set_random_seed(1234)
+        self.sess = tf.Session()
+        K.set_session(self.sess)
 
         self.TAU = 0.001  # for target network updates
         super(DDPG, self).__init__(*args, **kwargs)
-        self.lr_actor = self.lr / 10.
+        self.lr_actor = 0.0001
+        # print("ACTOR LEARNING RATE")
+        # print(self.lr_actor)
 
     def compile(self, memory, optimizer, policy, preprocessor):
         # override to make 4 optimizers
@@ -49,9 +55,9 @@ class DDPG(DQN):
 
     def build_actor_models(self, weight_init):
         model = self.Sequential()
-        self.build_hidden_layers(model, weight_init)
+        self.build_hidden_layers(model, normal_02)
         model.add(self.Dense(self.env_spec['action_dim'],
-                             init=weight_init,
+                             init='uniform',
                              # activation=self.output_layer_activation))
                              activation='tanh2'))
         logger.info('Actor model summary')
@@ -65,11 +71,11 @@ class DDPG(DQN):
             self.hidden_layers[0] if len(self.hidden_layers) > 1 else math.floor(self.hidden_layers[0]  * 1.25),
             input_shape=(self.env_spec['state_dim'],),
             activation=self.hidden_layers_activation,
-            init=weight_init))
+            init='normal'))
         state_branch.add(self.Dense(
             self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             activation=self.hidden_layers_activation,
-            init=weight_init))
+            init='normal'))
 
         # add action branch to second layer of the network
         action_branch = self.Sequential()
@@ -77,23 +83,23 @@ class DDPG(DQN):
             self.hidden_layers[1] if len(self.hidden_layers) > 1 else self.hidden_layers[0],
             input_shape=(self.env_spec['action_dim'],),
             activation=self.hidden_layers_activation,
-            init=weight_init))
+            init='normal'))
 
         input_layer = self.Merge([state_branch, action_branch], mode='concat')
 
         model = self.Sequential()
         model.add(input_layer)
 
-        if (len(self.hidden_layers) > 1):
-            for i in range(2, len(self.hidden_layers)):
-                model.add(self.Dense(
-                    self.hidden_layers[i],
-                    init=weight_init,
-                    # use_bias=True,
-                    activation=self.hidden_layers_activation))
+        # if (len(self.hidden_layers) > 1):
+        #     for i in range(2, len(self.hidden_layers)):
+        #         model.add(self.Dense(
+        #             self.hidden_layers[i],
+        #             init=normal_02,
+        #             # use_bias=True,
+        #             activation=self.hidden_layers_activation))
 
         model.add(self.Dense(1,
-                             init=weight_init,
+                             init='uniform',
                              activation=self.output_layer_activation))
         logger.info('Critic model summary')
         model.summary()
@@ -120,7 +126,7 @@ class DDPG(DQN):
 
         self.critic_state = self.critic.inputs[0]
         self.critic_action = self.critic.inputs[1]
-        self.critic_action_grads = self.K.tf.gradients(
+        self.critic_action_grads = self.tf.gradients(
             self.critic.output, self.critic_action)
 
         self.target_actor.compile(
@@ -135,6 +141,10 @@ class DDPG(DQN):
             loss='mse',
             optimizer=self.optimizer.target_critic_keras_optimizer)
         logger.info("Critic Models compiled")
+
+        init_op = self.tf.global_variables_initializer()
+        self.sess.run(init_op)
+        logger.info("Tensorflow variables initializaed")
 
     def update(self, sys_vars):
         '''Agent update apart from training the Q function'''
@@ -156,16 +166,17 @@ class DDPG(DQN):
     def train_actor(self, minibatch):
         '''update actor network using sampled gradient'''
         actions = self.actor.predict(minibatch['states'])
-        critic_grads = self.K.get_session().run(
+        critic_grads = self.sess.run(
             self.critic_action_grads, feed_dict={
                 self.critic_state: minibatch['states'],
                 self.critic_action: actions
             })[0]
         # actor.train(minibatch['states'], critic_grads)
-        self.K.get_session().run(self.actor_optimize, feed_dict={
+        self.sess.run(self.actor_optimize, feed_dict={
             self.actor_state: minibatch['states'],
             self.action_gradient: critic_grads
         })
+
         actor_loss = 0
         return actor_loss
 

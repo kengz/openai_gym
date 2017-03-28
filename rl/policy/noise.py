@@ -2,6 +2,34 @@ import numpy as np
 from rl.util import logger
 from rl.policy.base_policy import Policy
 
+class SimpleNoise(Policy):
+    def __init__(self, env_spec,
+                 **kwargs):  # absorb generic param without breaking
+        super(SimpleNoise, self).__init__(env_spec)
+        self.epi = 0
+
+    def select_action(self, state):
+        agent = self.agent
+        state = np.expand_dims(state, axis=0)
+        if self.env_spec['actions'] == 'continuous':
+            if agent.type == 'tensorflow':
+                action = agent.actor_predict(state)[0] + (1. / (1. + self.epi))    
+                print("Action: {} Noise: {}".format(action, (1. / (1. + self.epi))))
+                # action = agent.actor_predict(state)[0] 
+            else:
+                action = agent.actor.predict(state)[0] + (1. / (1. + self.epi))
+                # action = agent.actor.predict(state)[0] 
+        else:
+            print("Only suitable for continuous actions")
+            exit(0)
+        # print("Action taken")
+        # print(action)
+        return action
+
+    def update(self, sys_vars):
+        self.epi = sys_vars['epi']
+        # print("EPI: {}".format(self.epi))
+
 
 class AnnealedGaussian(Policy):
 
@@ -44,7 +72,10 @@ class AnnealedGaussian(Policy):
         agent = self.agent
         state = np.expand_dims(state, axis=0)
         if self.env_spec['actions'] == 'continuous':
-            action = agent.actor.predict(state)[0] + self.sample()
+            if agent.type == 'tensorflow':
+                action = agent.actor_predict(state)[0] + self.sample()
+            else:
+                action = agent.actor.predict(state)[0] + self.sample()
         else:
             if self.e > np.random.rand():
                 action = np.random.choice(agent.env_spec['actions'])

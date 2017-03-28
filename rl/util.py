@@ -5,12 +5,13 @@ import json
 import logging
 import multiprocessing as mp
 import numpy as np
+np.random.seed(1234)
 import re
 import sys
 from datetime import datetime, timedelta
 from os import path, listdir, environ, getpid
 from textwrap import wrap
-from keras.initializations import uniform
+from keras.initializations import uniform, normal
 from keras.activations import tanh
 from keras import initializations, activations
 
@@ -436,6 +437,12 @@ def tanh2(x):
     return tanh(x) * 2
 
 setattr(activations, 'tanh2', tanh2)
+
+def normal_02(shape, name):
+    # TO DO: Update to truncated normal
+    return normal(shape, scale=0.02, name=name)
+
+setattr(initializations, 'normal_02', normal_02)
 
 # clone a keras optimizer without file I/O
 def clone_optimizer(optimizer):
