@@ -2,7 +2,6 @@ import numpy as np
 from rl.policy.base_policy import Policy
 from rl.util import log_self
 
-
 class EpsilonGreedyPolicy(Policy):
 
     '''
