@@ -1,5 +1,5 @@
 # The trial logic and analysis
-RAND_SEED = 42
+RAND_SEED = 1234
 import numpy as np
 np.random.seed(RAND_SEED)
 np.seterr(all='raise')
@@ -76,6 +76,7 @@ class Session(object):
         # init all things, so a session can only be ran once
         self.sys_vars = self.init_sys_vars()
         self.env = gym.make(self.sys_vars['GYM_ENV_NAME'])
+        self.env.seed(1234)
         self.preprocessor = self.PreProcessor(**self.param)
         self.env_spec = self.set_env_spec()
         self.agent = self.Agent(self.env_spec, **self.param)
@@ -232,10 +233,12 @@ class Session(object):
                 action, reward, next_state, done)
             if processed_exp is not None:
                 agent.memory.add_exp(*processed_exp)
+            else:
+                print("Processed experience was None")
 
             sys_vars['done'] = done
             agent.update(sys_vars)
-            if agent.to_train(sys_vars):
+            if agent.to_train(sys_vars) and self.memory.size() > self.param['batch_size']:
                 agent.train(sys_vars)
             sys_vars['total_rewards'] += reward
             if done:

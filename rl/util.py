@@ -5,11 +5,15 @@ import json
 import logging
 import multiprocessing as mp
 import numpy as np
+np.random.seed(1234)
 import re
 import sys
 from datetime import datetime, timedelta
 from os import path, listdir, environ, getpid
 from textwrap import wrap
+from keras.initializations import uniform, normal
+from keras.activations import tanh
+from keras import initializations, activations
 
 PARALLEL_PROCESS_NUM = mp.cpu_count()
 TIMESTAMP_REGEX = r'(\d{4}_\d{2}_\d{2}_\d{6})'
@@ -419,6 +423,21 @@ def clone_model(model, custom_objects=None):
     clone.set_weights(model.get_weights())
     return clone
 
+def ddpg_weight_init(shape, name):
+    return uniform(shape, scale=0.003, name=name)
+
+setattr(initializations, 'ddpg_weight_init', ddpg_weight_init)
+
+def tanh2(x):
+    return tanh(x) * 2
+
+setattr(activations, 'tanh2', tanh2)
+
+def normal_02(shape, name):
+    # TO DO: Update to truncated normal
+    return normal(shape, scale=0.02, name=name)
+
+setattr(initializations, 'normal_02', normal_02)
 
 # clone a keras optimizer without file I/O
 def clone_optimizer(optimizer):
@@ -432,3 +451,4 @@ def clone_optimizer(optimizer):
     }
     clone = optimizer_from_config(config)
     return clone
+

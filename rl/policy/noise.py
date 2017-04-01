@@ -2,6 +2,34 @@ import numpy as np
 from rl.util import logger
 from rl.policy.base_policy import Policy
 
+class SimpleNoise(Policy):
+    def __init__(self, env_spec,
+                 **kwargs):  # absorb generic param without breaking
+        super(SimpleNoise, self).__init__(env_spec)
+        self.epi = 0
+
+    def select_action(self, state):
+        agent = self.agent
+        state = np.expand_dims(state, axis=0)
+        if self.env_spec['actions'] == 'continuous':
+            if agent.type == 'tensorflow':
+                action = agent.actor_predict(state)[0] + (1. / (1. + self.epi))    
+                print("Action: {} Noise: {}".format(action, (1. / (1. + self.epi))))
+                # action = agent.actor_predict(state)[0] 
+            else:
+                action = agent.actor.predict(state)[0] + (1. / (1. + self.epi))
+                # action = agent.actor.predict(state)[0] 
+        else:
+            print("Only suitable for continuous actions")
+            exit(0)
+        # print("Action taken")
+        # print(action)
+        return action
+
+    def update(self, sys_vars):
+        self.epi = sys_vars['epi']
+        # print("EPI: {}".format(self.epi))
+
 
 class AnnealedGaussian(Policy):
 
@@ -13,6 +41,7 @@ class AnnealedGaussian(Policy):
 
     def __init__(self, env_spec,
                  mu, sigma, sigma_min,
+                 init_e=1.0, final_e=0.1, exploration_anneal_episodes=30,
                  **kwargs):  # absorb generic param without breaking
         super(AnnealedGaussian, self).__init__(env_spec)
         self.size = self.env_spec['action_dim']
@@ -20,6 +49,10 @@ class AnnealedGaussian(Policy):
         self.mu = mu
         self.sigma = sigma
         self.n_steps = 0
+        self.init_e = init_e
+        self.final_e = final_e
+        self.e = self.init_e
+        self.exploration_anneal_episodes = exploration_anneal_episodes
 
         if sigma_min is not None:
             self.m = -float(sigma - sigma_min) / float(self.n_steps_annealing)
@@ -39,16 +72,27 @@ class AnnealedGaussian(Policy):
         agent = self.agent
         state = np.expand_dims(state, axis=0)
         if self.env_spec['actions'] == 'continuous':
-            action = agent.actor.predict(state)[0] + self.sample()
+            if agent.type == 'tensorflow':
+                action = agent.actor_predict(state)[0] + self.sample()
+            else:
+                action = agent.actor.predict(state)[0] + self.sample()
         else:
-            Q_state = agent.actor.predict(state)[0]
-            assert Q_state.ndim == 1
-            action = np.argmax(Q_state)
-            logger.info(str(Q_state)+' '+str(action))
+            if self.e > np.random.rand():
+                action = np.random.choice(agent.env_spec['actions'])
+            else:
+                Q_state = agent.actor.predict(state)[0]
+                assert Q_state.ndim == 1
+                action = np.argmax(Q_state)
+                # logger.info(str(Q_state)+' '+str(action))
         return action
 
     def update(self, sys_vars):
-        pass
+        '''strategy to update epsilon in agent'''
+        epi = sys_vars['epi']
+        rise = self.final_e - self.init_e
+        slope = rise / float(self.exploration_anneal_episodes)
+        self.e = max(slope * epi + self.init_e, self.final_e)
+        return self.e
 
 
 class GaussianWhiteNoise(AnnealedGaussian):

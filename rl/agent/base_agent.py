@@ -10,6 +10,7 @@ class Agent(object):
     def __init__(self, env_spec,
                  **kwargs):  # absorb generic param without breaking
         self.env_spec = env_spec
+        self.type = 'keras'
 
     def compile(self, memory, optimizer, policy, preprocessor):
         # set 2 way references

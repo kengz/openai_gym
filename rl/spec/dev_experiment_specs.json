@@ -126,20 +126,53 @@
     "Policy": "OUNoise",
     "PreProcessor": "NoPreProcessor",
     "param": {
-      "lr": 0.01,
-      "decay": 0.0,
+      "lr": 0.001,
       "gamma": 0.99,
-      "hidden_layers": [64],
-      "hidden_layers_activation": "sigmoid",
+      "hidden_layers": [16],
+      "batch_size" : 32,
+      "n_epoch": 1,
+      "hidden_layers_activation": "relu",
       "output_layer_activation": "linear",
-      "exploration_anneal_episodes": 10,
-      "auto_architecture": false,
-      "num_hidden_layers": 3,
-      "first_hidden_layer_size": 512
+      "exploration_anneal_episodes": 50
     },
     "param_range": {
-      "gamma": [0.97, 0.99],
-      "lr": [0.01, 0.1]
+      "gamma": [0.97, 0.98, 0.99],
+      "lr": [0.01, 0.005, 0.001],
+      "hidden_layers": [
+        [8],
+        [16],
+        [32],
+        [64]
+      ]
+    }
+  },
+  "dev_pendulum": {
+    "problem": "Pendulum-v0",
+    "Agent": "DDPGTF",
+    "HyperOptimizer": "GridSearch",
+    "Memory": "LinearMemory",
+    "Optimizer": "AdamOptimizer",
+    "Policy": "SimpleNoise",
+    "PreProcessor": "NoPreProcessor",
+    "param": {
+      "lr": 0.001,
+      "gamma": 0.99,
+      "hidden_layers": [400, 300],
+      "batch_size" : 64,
+      "n_epoch": 1,
+      "hidden_layers_activation": "relu",
+      "output_layer_activation": "linear",
+      "exploration_anneal_episodes": 50,
+      "weight_init" : "ddpg_weight_init"
+    },
+    "param_range": {
+      "gamma": [0.97, 0.98, 0.99],
+      "lr": [0.01, 0.005, 0.001],
+      "hidden_layers": [
+        [400, 300],
+        [300, 200],
+        [200, 100]
+      ]
     }
   }
 }
