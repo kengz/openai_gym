@@ -32,7 +32,7 @@
   "MountainCar-v0": {
     "GYM_ENV_NAME": "MountainCar-v0",
     "SOLVED_MEAN_REWARD": -110.0,
-    "MAX_EPISODES": 1000,
+    "MAX_EPISODES": 1400,
     "REWARD_MEAN_LEN": 100
   },
   "MountainCarContinuous-v0": {
