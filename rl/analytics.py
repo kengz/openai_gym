@@ -40,7 +40,7 @@ def scoped_mpl_import():
     import matplotlib
     matplotlib.rcParams['backend'] = MPL_BACKEND
 
-    import matplotlib.pyplot as plt 
+    import matplotlib.pyplot as plt
     plt.rcParams['toolbar'] = 'None'  # mute matplotlib toolbar
 
     import seaborn as sns
