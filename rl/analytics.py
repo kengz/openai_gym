@@ -8,8 +8,8 @@ from rl.util import *
 
 warnings.filterwarnings("ignore", module="matplotlib")
 
-MPL_BACKEND = 'agg' if environ.get('CI') else ('macosx' 
-            if platform.system() == 'Darwin' else 'TkAgg' )
+MPL_BACKEND = 'agg' if environ.get('CI') else (
+    'macosx' if platform.system() == 'Darwin' else 'TkAgg')
 
 STATS_COLS = [
     'best_session_epi',
@@ -40,7 +40,7 @@ def scoped_mpl_import():
     import matplotlib
     matplotlib.rcParams['backend'] = MPL_BACKEND
 
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt 
     plt.rcParams['toolbar'] = 'None'  # mute matplotlib toolbar
 
     import seaborn as sns
@@ -139,8 +139,9 @@ class Grapher(object):
         ax3.relim()
         ax3.autoscale_view(tight=True, scalex=True, scaley=True)
 
-        self.plt.draw()
-        self.plt.pause(0.01)
+        if sys_vars['RENDER']:
+            self.plt.pause(0.01)
+            self.plt.draw()
         self.save()
         import gc
         gc.collect()
