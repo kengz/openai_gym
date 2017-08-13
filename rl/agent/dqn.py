@@ -1,6 +1,106 @@
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import autograd
+
 from rl.agent.base_agent import Agent
 from rl.util import logger, log_self
+
+NumpyType = Any
+
+def get_activation_fn(name):
+    def linear(x):
+        return x
+
+    return { "relu": F.relu, "sigmoid": F.sigmoid, "linear": linear }[name]
+
+def parse_minibatch_to_torch(
+        minibatch: Dict[str, NumpyType]
+    ) -> Dict[str, autograd.Variable]:
+    '''
+    Args:
+        minibatch: A minibatch dictionary obtained from replay memory.
+    Returns:
+        A dictionary with the same keys that maps to torch variables.
+    '''
+    assert sorted(minibatch.keys()) == \
+            sorted(['states', 'rewards', 'next_states', 'terminals', 'actions'])
+    ret = {
+        k: autograd.Variable(torch.from_numpy(v).float(), requires_grad=False)
+        for k, v in minibatch.items() if k != "states"
+    }
+    ret["states"] = autograd.Variable(
+        torch.from_numpy(minibatch["states"]).float(), requires_grad=True)
+    return ret
+
+
+def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
+    '''
+    Args:
+        dqn: A DQN object populated with the relevant fields.
+    Returns:
+        A pair of lists with the transformation matrix and the layer output
+        dimensions rrepsctively. Both lists have the same length.
+    '''
+    # Auto architecture infers the size of the hidden layers from the size
+    # of the first layer. Each successive hidden layer is half the size of the
+    # previous layer
+    # Enables hyperparameter optimization over network architecture
+    layers = []
+    dims = []
+
+    if dqn.auto_architecture:
+        curr_layer_size = dqn.first_hidden_layer_size
+        dims.append(cur_layer_size)
+        layers.append(nn.Linear(dqn.env_spec['state_dim'], cur_layer_size))
+
+        prev_layer_size = curr_layer_size
+        curr_layer_size = int(curr_layer_size / 2)
+        for i in range(1, dqn.num_hidden_layers):
+            dims.append(cur_layer_size)
+            layers.append(nn.Linear(prev_layer_size, curr_layer_size))
+            prev_layer_size = curr_layer_size
+            curr_layer_size = int(curr_layer_size / 2)
+
+    else:
+        dims = list(dqn.hidden_layers)
+        layers.append(
+            nn.Linear(dqn.env_spec['state_dim'], dqn.hidden_layers[0]))
+
+        # inner hidden layer: no specification of input shape
+        if (len(dqn.hidden_layers) > 1):
+            for i in range(1, len(dqn.hidden_layers)):
+                layers.append(nn.Linear(dqn.hidden_layers[i - 1], dqn.hidden_layers[i]))
+
+    return layers, dims
+
+
+class Net(nn.Module):
+
+    def __init__(self, dqn):
+        '''
+        Args:
+            dqn: An instance of the DQN object with the properties to define
+                 the specifciation of the net.
+        '''
+        super().__init__()
+        hidden_layers, hidden_layer_dims = build_hidden_layers(dqn)
+
+        self._hidden_layers_activation = get_activation_fn(
+                dqn.hidden_layers_activation)
+        self._output_layer_activation = get_activation_fn(
+                dqn.output_layer_activation)
+        self._hidden_layers = hidden_layers
+        self._output_layer = nn.Linear(
+                hidden_layer_dims[-1], dqn.env_spec['action_dim'])
+
+    def forward(self, x):
+        for layer in self._hidden_layers:
+            x = self._hidden_layers_activation(layer(x))
+        return self._output_layer_activation(self._output_layer(x))
 
 
 class DQN(Agent):
@@ -24,13 +124,6 @@ class DQN(Agent):
                  first_hidden_layer_size=256,
                  num_initial_channels=16,
                  **kwargs):  # absorb generic param without breaking
-        # import only when needed to contain side-effects
-        from keras.layers.core import Dense
-        from keras.models import Sequential, load_model
-        self.Dense = Dense
-        self.Sequential = Sequential
-        self.load_model = load_model
-
         super(DQN, self).__init__(env_spec)
 
         self.train_per_n_new_exp = train_per_n_new_exp
@@ -51,61 +144,15 @@ class DQN(Agent):
         log_self(self)
         self.build_model()
 
-    def build_hidden_layers(self, model):
-        '''
-        build the hidden layers into model using parameter self.hidden_layers
-        '''
-
-        # Auto architecture infers the size of the hidden layers from the size
-        # of the first layer. Each successive hidden layer is half the size of the
-        # previous layer
-        # Enables hyperparameter optimization over network architecture
-        if self.auto_architecture:
-            curr_layer_size = self.first_hidden_layer_size
-            model.add(self.Dense(curr_layer_size,
-                                 input_shape=(self.env_spec['state_dim'],),
-                                 activation=self.hidden_layers_activation,
-                                 init='lecun_uniform'))
-
-            curr_layer_size = int(curr_layer_size / 2)
-            for i in range(1, self.num_hidden_layers):
-                model.add(self.Dense(curr_layer_size,
-                                     init='lecun_uniform',
-                                     activation=self.hidden_layers_activation))
-                curr_layer_size = int(curr_layer_size / 2)
-
-        else:
-            model.add(self.Dense(self.hidden_layers[0],
-                                 input_shape=(self.env_spec['state_dim'],),
-                                 activation=self.hidden_layers_activation,
-                                 init='lecun_uniform'))
-            # inner hidden layer: no specification of input shape
-            if (len(self.hidden_layers) > 1):
-                for i in range(1, len(self.hidden_layers)):
-                    model.add(self.Dense(
-                        self.hidden_layers[i],
-                        init='lecun_uniform',
-                        activation=self.hidden_layers_activation))
-
-        return model
-
     def build_model(self):
-        model = self.Sequential()
-        self.build_hidden_layers(model)
-        model.add(self.Dense(self.env_spec['action_dim'],
-                             init='lecun_uniform',
-                             activation=self.output_layer_activation))
-        logger.info("Model summary")
-        model.summary()
-        self.model = model
-
-        logger.info("Model built")
+        self.model = Net(self)
         return self.model
 
     def compile_model(self):
-        self.model.compile(
-            loss='mse',
-            optimizer=self.optimizer.keras_optimizer)
+        self._loss_fn = torch.nn.MSELoss()
+        self.torch_optimizer = self.optimizer.torch_optimizer(
+                self.model.parameters())
+        self.torch_optimizer.zero_grad()
         logger.info("Model compiled")
 
     def recompile_model(self, sys_vars):
@@ -114,6 +161,7 @@ class DQN(Agent):
         Currently only used for changing the learning rate
         Compiling does not affect the model weights
         '''
+        return self.model
         if self.epi_change_lr is not None:
             if (sys_vars['epi'] == self.epi_change_lr and
                     sys_vars['t'] == 0):
@@ -164,13 +212,13 @@ class DQN(Agent):
             t == (timestep_limit-1) or
             done)
 
-    def compute_Q_states(self, minibatch):
+    def _compute_Q_states(self, minibatch):
         # note the computed values below are batched in array
-        Q_states = np.clip(self.model.predict(minibatch['states']),
-                           -self.clip_val, self.clip_val)
-        Q_next_states = np.clip(self.model.predict(minibatch['next_states']),
-                                -self.clip_val, self.clip_val)
-        Q_next_states_max = np.amax(Q_next_states, axis=1)
+        Q_states = self.model(minibatch['states']).clamp(
+                min=-self.clip_val, max=self.clip_val)
+        Q_next_states = self.model(minibatch['next_states']).clamp(
+                min=-self.clip_val, max=self.clip_val)
+        Q_next_states_max, _ = torch.max(Q_next_states, dim=1)
         return (Q_states, Q_next_states, Q_next_states_max)
 
     def compute_Q_targets(self, minibatch, Q_states, Q_next_states_max):
@@ -184,20 +232,24 @@ class DQN(Agent):
         return Q_targets
 
     def train_an_epoch(self):
-        minibatch = self.memory.rand_minibatch(self.batch_size)
-
-        (Q_states, _states, Q_next_states_max) = self.compute_Q_states(
-            minibatch)
+        minibatch = parse_minibatch_to_torch(
+            self.memory.rand_minibatch(self.batch_size))
+        (Q_states, _states, Q_next_states_max) = \
+                self._compute_Q_states(minibatch)
         Q_targets = self.compute_Q_targets(
-            minibatch, Q_states, Q_next_states_max)
-        loss = self.model.train_on_batch(minibatch['states'], Q_targets)
+                minibatch, Q_states, Q_next_states_max)
 
-        errors = abs(np.sum(Q_states - Q_targets, axis=1))
-        assert Q_targets.shape == (
+        self.torch_optimizer.zero_grad()
+        loss = self._loss_fn(Q_states, autograd.Variable(Q_targets.data))
+        loss.backward()
+        self.torch_optimizer.step()
+
+        errors = abs(torch.sum(Q_states - Q_targets, dim=1).data.numpy())
+        assert Q_targets.size() == (
             self.batch_size, self.env_spec['action_dim'])
         assert errors.shape == (self.batch_size, )
         self.memory.update(errors)
-        return loss
+        return loss.data.numpy()
 
     def train(self, sys_vars):
         '''
@@ -214,8 +266,10 @@ class DQN(Agent):
         return avg_loss
 
     def save(self, model_path, global_step=None):
+        # TODO(fyquah): Figure out how to save models in pytorch
         logger.info('Saving model checkpoint')
-        self.model.save_weights(model_path)
+        # self.model.save_weights(model_path)
 
     def restore(self, model_path):
-        self.model.load_weights(model_path, by_name=False)
+        # TODO(fyquah): Figure out how to load models in pytorch
+        pass

@@ -15,4 +15,4 @@ pytest-xdist>=1.15.0
 codacy-coverage>=1.3.3
 tensorflow>=1.0.0
 Keras>=1.2.2,<2.0.0
--e git+https://github.com/openai/gym.git#egg=gym[all]
+git+https://github.com/openai/gym.git#egg=gym[all]

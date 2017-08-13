@@ -1,5 +1,7 @@
 from rl.util import log_self, logger
 
+from torch.optim import adam
+from torch import nn
 
 class Optimizer(object):
 
@@ -23,6 +25,9 @@ class Optimizer(object):
         self.optim_param.update(o_param)
 
     def init_optimizer(self):
+        raise NotImplementedError()
+
+    def torch_optimizer(self, parameters: nn.ParameterList):
         raise NotImplementedError()
 
     def change_optim_param(self, **new_param):

@@ -1,4 +1,7 @@
 import numpy as np
+import torch
+from torch import autograd
+
 from rl.policy.base_policy import Policy
 from rl.util import log_self
 
@@ -24,7 +27,8 @@ class BoltzmannPolicy(Policy):
     def select_action(self, state):
         agent = self.agent
         state = np.expand_dims(state, axis=0)
-        Q_state = agent.model.predict(state)[0]  # extract from batch predict
+        torch_state = autograd.Variable(torch.from_numpy(state).float())
+        Q_state = agent.model(torch_state).data.numpy()[0]  # extract from batch predict
         assert Q_state.ndim == 1
         Q_state = Q_state.astype('float64')  # fix precision overflow
         exp_values = np.exp(
