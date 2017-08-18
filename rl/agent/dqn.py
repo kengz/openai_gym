@@ -1,3 +1,4 @@
+import math
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
@@ -17,6 +18,10 @@ def get_activation_fn(name):
 
     return { "relu": F.relu, "sigmoid": F.sigmoid, "linear": linear }[name]
 
+def verify_keys(d : Dict[Any, Any], keys : List[Any]):
+    assert isinstance(d, dict)
+    assert sorted(d.keys()) == sorted(keys)
+
 def parse_minibatch_to_torch(
         minibatch: Dict[str, NumpyType]
     ) -> Dict[str, autograd.Variable]:
@@ -26,8 +31,15 @@ def parse_minibatch_to_torch(
     Returns:
         A dictionary with the same keys that maps to torch variables.
     '''
-    assert sorted(minibatch.keys()) == \
-            sorted(['states', 'rewards', 'next_states', 'terminals', 'actions'])
+
+    verify_keys(minibatch, [
+            'states',
+            'rewards',
+            'next_states',
+            'terminals',
+            'actions',
+            'error',
+            ])
     ret = {
         k: autograd.Variable(torch.from_numpy(v).float(), requires_grad=False)
         for k, v in minibatch.items() if k != "states"
@@ -73,7 +85,18 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
         # inner hidden layer: no specification of input shape
         if (len(dqn.hidden_layers) > 1):
             for i in range(1, len(dqn.hidden_layers)):
-                layers.append(nn.Linear(dqn.hidden_layers[i - 1], dqn.hidden_layers[i]))
+                layers.append(
+                        nn.Linear(
+                            dqn.hidden_layers[i - 1],
+                            dqn.hidden_layers[i]))
+
+    for layer in layers:
+        tensor = layer.weight.data
+        fan_in = nn.init._calculate_correct_fan(tensor, 'fan_in')
+        nn.init.uniform(
+                tensor, -math.sqrt(3 / fan_in), math.sqrt(3 / fan_in))
+        tensor.uniform_(-math.sqrt(3 / fan_in), math.sqrt(3 / fan_in))
+        layer.bias.data.fill_(0)
 
     return layers, dims
 
@@ -266,10 +289,9 @@ class DQN(Agent):
         return avg_loss
 
     def save(self, model_path, global_step=None):
-        # TODO(fyquah): Figure out how to save models in pytorch
         logger.info('Saving model checkpoint')
-        # self.model.save_weights(model_path)
+        torch.save(self.model.state_dict(), model_path)
 
     def restore(self, model_path):
-        # TODO(fyquah): Figure out how to load models in pytorch
-        pass
+        logger.info('Loading model checkpoint')
+        self.model = torch.load(model_path)
