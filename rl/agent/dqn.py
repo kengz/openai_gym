@@ -238,7 +238,7 @@ class DQN(Agent):
             t == (timestep_limit-1) or
             done)
 
-    def _compute_Q_states(self, minibatch):
+    def compute_Q_states(self, minibatch):
         # note the computed values below are batched in array
         Q_states = self.model(minibatch['states']).clamp(
                 min=-self.clip_val, max=self.clip_val)
@@ -261,7 +261,7 @@ class DQN(Agent):
         minibatch = parse_minibatch_to_torch(
             self.memory.rand_minibatch(self.batch_size))
         (Q_states, _states, Q_next_states_max) = \
-                self._compute_Q_states(minibatch)
+                self.compute_Q_states(minibatch)
         Q_targets = self.compute_Q_targets(
                 minibatch, Q_states, Q_next_states_max)
 
