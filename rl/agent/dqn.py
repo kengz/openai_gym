@@ -86,12 +86,11 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
             nn.Linear(dqn.env_spec['state_dim'], dqn.hidden_layers[0]))
 
         # inner hidden layer: no specification of input shape
-        if (len(dqn.hidden_layers) > 1):
-            for i in range(1, len(dqn.hidden_layers)):
-                layers.append(
-                        nn.Linear(
-                            dqn.hidden_layers[i - 1],
-                            dqn.hidden_layers[i]))
+        for i in range(1, len(dqn.hidden_layers)):
+            layers.append(
+                    nn.Linear(
+                        dqn.hidden_layers[i - 1],
+                        dqn.hidden_layers[i]))
 
     for layer in layers:
         tensor = layer.weight.data
@@ -118,7 +117,7 @@ class Net(nn.Module):
                 dqn.hidden_layers_activation)
         self._output_layer_activation = get_activation_fn(
                 dqn.output_layer_activation)
-        self._hidden_layers = hidden_layers
+        self._hidden_layers = nn.ModuleList(hidden_layers)
         self._output_layer = nn.Linear(
                 hidden_layer_dims[-1], dqn.env_spec['action_dim'])
 
