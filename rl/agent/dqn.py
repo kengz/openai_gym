@@ -18,9 +18,17 @@ def get_activation_fn(name):
 
     return { "relu": F.relu, "sigmoid": F.sigmoid, "linear": linear }[name]
 
-def verify_keys(d : Dict[Any, Any], keys : List[Any]):
+def verify_contains_subset(d : Dict[Any, Any], keys : List[Any]):
     assert isinstance(d, dict)
-    assert sorted(d.keys()) == sorted(keys)
+    obtained = set(d.keys())
+    expected = set(keys)
+    if not expected.issubset(obtained):
+        msg = "Given a dictionary with keys {} ; but expected at least the following keys {}"
+        msg = msg.format(
+                ",".join(str(key) for key in obtained),
+                ",".join(str(key) for key in expected))
+        raise AssertionError(msg)
+
 
 def parse_minibatch_to_torch(
         minibatch: Dict[str, NumpyType]
@@ -32,22 +40,17 @@ def parse_minibatch_to_torch(
         A dictionary with the same keys that maps to torch variables.
     '''
 
-    verify_keys(minibatch, [
+    verify_contains_subset(minibatch, [
             'states',
             'rewards',
             'next_states',
             'terminals',
             'actions',
-            'error',
             ])
-    ret = {
-        k: autograd.Variable(torch.from_numpy(v).float(), requires_grad=False)
-        for k, v in minibatch.items() if k != "states"
+    return {
+        k: autograd.Variable(torch.from_numpy(v).float(), requires_grad=True)
+        for k, v in minibatch.items()
     }
-    ret["states"] = autograd.Variable(
-        torch.from_numpy(minibatch["states"]).float(), requires_grad=True)
-    return ret
-
 
 def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
     '''
@@ -172,7 +175,7 @@ class DQN(Agent):
         return self.model
 
     def compile_model(self):
-        self._loss_fn = torch.nn.MSELoss()
+        self._loss_fn = torch.nn.MSELoss(size_average=False)
         self.torch_optimizer = self.optimizer.torch_optimizer(
                 self.model.parameters())
         self.torch_optimizer.zero_grad()
