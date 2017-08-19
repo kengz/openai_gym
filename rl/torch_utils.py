@@ -5,3 +5,6 @@ def from_numpy(x):
 
 def to_numpy(tensor):
     return tensor.cpu().numpy()
+
+def maybe_cuda(tensor):
+    return tensor.cuda()

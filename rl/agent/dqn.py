@@ -1,5 +1,5 @@
 import math
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,6 +12,15 @@ from rl.agent.base_agent import Agent
 from rl.util import logger, log_self
 
 NumpyType = Any
+
+def input_length(dim : Union[int, List[int]]):
+    res = 1
+    if isinstance(dim, int):
+        return dim
+
+    for d in dim:
+        res = res * d
+    return res
 
 def get_activation_fn(name):
     def linear(x):
@@ -67,11 +76,12 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
     # Enables hyperparameter optimization over network architecture
     layers = []
     dims = []
+    state_dim = input_length(dqn.env_spec['state_dim'])
 
     if dqn.auto_architecture:
         curr_layer_size = dqn.first_hidden_layer_size
         dims.append(cur_layer_size)
-        layers.append(nn.Linear(dqn.env_spec['state_dim'], cur_layer_size))
+        layers.append(nn.Linear(state_dim, cur_layer_size))
 
         prev_layer_size = curr_layer_size
         curr_layer_size = int(curr_layer_size / 2)
@@ -84,7 +94,7 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
     else:
         dims = list(dqn.hidden_layers)
         layers.append(
-            nn.Linear(dqn.env_spec['state_dim'], dqn.hidden_layers[0]))
+            nn.Linear(state_dim, dqn.hidden_layers[0]))
 
         # inner hidden layer: no specification of input shape
         for i in range(1, len(dqn.hidden_layers)):
@@ -113,6 +123,7 @@ class Net(nn.Module):
         '''
         super().__init__()
         hidden_layers, hidden_layer_dims = build_hidden_layers(dqn)
+        self._input_length = input_length(dqn.env_spec['state_dim'])
 
         self._hidden_layers_activation = get_activation_fn(
                 dqn.hidden_layers_activation)
@@ -123,6 +134,7 @@ class Net(nn.Module):
                 hidden_layer_dims[-1], dqn.env_spec['action_dim'])
 
     def forward(self, x):
+        x = x.view(-1, self._input_length)
         for layer in self._hidden_layers:
             x = self._hidden_layers_activation(layer(x))
         return self._output_layer_activation(self._output_layer(x))
@@ -247,8 +259,11 @@ class DQN(Agent):
         Q_next_states_max, _ = torch.max(Q_next_states, dim=1)
         return (Q_states, Q_next_states, Q_next_states_max)
 
-    def compute_Q_targets(self, minibatch, Q_states, Q_next_states_max):
+    def _compute_Q_targets(self, minibatch, Q_states, Q_next_states_max):
         # make future reward 0 if exp is terminal
+        assert Q_states.size() == (
+                self.batch_size, self.env_spec['action_dim'])
+        assert Q_next_states_max.size() == (self.batch_size,)
         Q_targets_a = minibatch['rewards'] + self.gamma * \
             (1 - minibatch['terminals']) * Q_next_states_max
         # set batch Q_targets of a as above, the rest as is
@@ -262,7 +277,7 @@ class DQN(Agent):
             self.memory.rand_minibatch(self.batch_size))
         (Q_states, _states, Q_next_states_max) = \
                 self.compute_Q_states(minibatch)
-        Q_targets = self.compute_Q_targets(
+        Q_targets = self._compute_Q_targets(
                 minibatch, Q_states, Q_next_states_max)
 
         self.torch_optimizer.zero_grad()
