@@ -175,7 +175,7 @@ class DQN(Agent):
         return self.model
 
     def compile_model(self):
-        self._loss_fn = torch.nn.MSELoss(size_average=False)
+        self._loss_fn = torch.nn.MSELoss(size_average=True)
         self.torch_optimizer = self.optimizer.torch_optimizer(
                 self.model.parameters())
         self.torch_optimizer.zero_grad()
