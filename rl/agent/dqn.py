@@ -97,9 +97,8 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
         tensor = layer.weight.data
         fan_in = nn.init._calculate_correct_fan(tensor, 'fan_in')
         nn.init.uniform(
-                tensor, -math.sqrt(3 / fan_in), math.sqrt(3 / fan_in))
-        tensor.uniform_(-math.sqrt(3 / fan_in), math.sqrt(3 / fan_in))
-        layer.bias.data.fill_(0)
+                tensor, a=-math.sqrt(3 / fan_in), b=math.sqrt(3 / fan_in))
+        layer.bias.data.fill_(0.)
 
     return layers, dims
 
