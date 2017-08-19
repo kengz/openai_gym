@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import autograd
 
+from rl import torch_utils
 from rl.agent.base_agent import Agent
 from rl.util import logger, log_self
 
@@ -29,8 +30,7 @@ def verify_contains_subset(d : Dict[Any, Any], keys : List[Any]):
                 ",".join(str(key) for key in expected))
         raise AssertionError(msg)
 
-
-def parse_minibatch_to_torch(
+def parse_minibatch_to_torch_cuda(
         minibatch: Dict[str, NumpyType]
     ) -> Dict[str, autograd.Variable]:
     '''
@@ -48,7 +48,8 @@ def parse_minibatch_to_torch(
             'actions',
             ])
     return {
-        k: autograd.Variable(torch.from_numpy(v).float(), requires_grad=True)
+        k: autograd.Variable(
+            torch_utils.from_numpy(v).float(), requires_grad=True)
         for k, v in minibatch.items()
     }
 
@@ -170,6 +171,7 @@ class DQN(Agent):
 
     def build_model(self):
         self.model = Net(self)
+        self.model.cuda()
         return self.model
 
     def compile_model(self):
@@ -256,7 +258,7 @@ class DQN(Agent):
         return Q_targets
 
     def train_an_epoch(self):
-        minibatch = parse_minibatch_to_torch(
+        minibatch = parse_minibatch_to_torch_cuda(
             self.memory.rand_minibatch(self.batch_size))
         (Q_states, _states, Q_next_states_max) = \
                 self.compute_Q_states(minibatch)
@@ -268,12 +270,13 @@ class DQN(Agent):
         loss.backward()
         self.torch_optimizer.step()
 
-        errors = abs(torch.sum(Q_states - Q_targets, dim=1).data.numpy())
+        errors = abs(torch_utils.to_numpy(
+                torch.sum(Q_states - Q_targets, dim=1).data))
         assert Q_targets.size() == (
             self.batch_size, self.env_spec['action_dim'])
         assert errors.shape == (self.batch_size, )
         self.memory.update(errors)
-        return loss.data.numpy()
+        return torch_utils.to_numpy(loss.data)
 
     def train(self, sys_vars):
         '''
@@ -296,3 +299,4 @@ class DQN(Agent):
     def restore(self, model_path):
         logger.info('Loading model checkpoint')
         self.model = torch.load(model_path)
+        self.model.cuda()
