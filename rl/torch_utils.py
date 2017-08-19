@@ -1,10 +1,21 @@
 import torch
 
 def from_numpy(x):
-    return torch.from_numpy(x).cuda()
+    x = torch.from_numpy(x) 
+    if torch.cuda.device_count() > 0:
+        return x.cuda()
+    else:
+        return x
+
 
 def to_numpy(tensor):
-    return tensor.cpu().numpy()
+    if torch.cuda.device_count() > 0:
+        return tensor.cpu().numpy()
+    else:
+        return tensor.numpy()
 
 def maybe_cuda(tensor):
-    return tensor.cuda()
+    if torch.cuda.device_count() > 0:
+        return tensor.cuda()
+    else:
+        return tensor
