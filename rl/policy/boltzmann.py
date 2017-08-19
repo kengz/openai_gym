@@ -28,10 +28,8 @@ class BoltzmannPolicy(Policy):
     def select_action(self, state):
         agent = self.agent
         state = np.expand_dims(state, axis=0)
-        torch_state = autograd.Variable(
-                torch.from_numpy(state).float().cuda())
         # extract from batch predict
-        Q_state = torch_utils.to_numpy(agent.model(torch_state).data[0])
+        Q_state = agent.model.predict(state)[0]
         assert Q_state.ndim == 1
         Q_state = Q_state.astype('float64')  # fix precision overflow
         exp_values = np.exp(

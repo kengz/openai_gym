@@ -17,7 +17,7 @@ class DoubleDQN(dqn.DQN):
     def build_model(self):
         super(DoubleDQN, self).build_model()
         self.model_2 = dqn.Net(self)
-        torch_util.maybe_cuda(self.model_2.cuda())
+        torch_utils.maybe_cuda(self.model_2.cuda())
         return self.model, self.model_2
 
     def compile_model(self):

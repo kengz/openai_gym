@@ -139,6 +139,11 @@ class Net(nn.Module):
             x = self._hidden_layers_activation(layer(x))
         return self._output_layer_activation(self._output_layer(x))
 
+    def predict(self, data: NumpyType) -> NumpyType:
+        print(data.shape)
+        predicted = self.__call__(
+                autograd.Variable(torch_utils.from_numpy(data).float()))
+        return torch_utils.to_numpy(predicted.data)
 
 class DQN(Agent):
 
