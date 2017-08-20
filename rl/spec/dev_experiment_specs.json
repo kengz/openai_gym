@@ -93,34 +93,6 @@
       }
     }
   },
-  "dev_action_critic": {
-    "problem": "DevCartPole-v0",
-    "Agent": "DoubleDQN",
-    "HyperOptimizer": "GridSearch",
-    "Memory": "PrioritizedExperienceReplay",
-    "Optimizer": "AdamOptimizer",
-    "Policy": "BoltzmannPolicy",
-    "PreProcessor": "NoPreProcessor",
-    "param": {
-      "lr": 0.01,
-      "decay": 0.0,
-      "gamma": 0.99,
-      "n_epoch": 1,
-      "hidden_layers": [32],
-      "hidden_layers_activation": "sigmoid",
-      "exploration_anneal_episodes": 10,
-      "auto_architecture": false,
-      "num_hidden_layers": 3,
-      "first_hidden_layer_size": 512,
-      "e": 0.01,
-      "alpha": 0.6,
-      "max_mem_len": 7
-    },
-    "param_range": {
-      "gamma": [0.97, 0.99],
-      "lr": [0.01, 0.1]
-    }
-  },
   "dev_dqn": {
     "problem": "DevCartPole-v0",
     "Agent": "DQN",

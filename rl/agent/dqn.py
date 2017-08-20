@@ -62,6 +62,11 @@ def parse_minibatch_to_torch_cuda(
         for k, v in minibatch.items()
     }
 
+def lecun_init(tensor):
+    fan_in = nn.init._calculate_correct_fan(tensor, 'fan_in')
+    nn.init.uniform(
+            tensor, a=-math.sqrt(3 / fan_in), b=math.sqrt(3 / fan_in))
+
 def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
     '''
     Args:
@@ -74,40 +79,23 @@ def build_hidden_layers(dqn) -> Tuple[List[nn.Linear], List[int]]:
     # of the first layer. Each successive hidden layer is half the size of the
     # previous layer
     # Enables hyperparameter optimization over network architecture
-    layers = []
     dims = []
     state_dim = input_length(dqn.env_spec['state_dim'])
 
     if dqn.auto_architecture:
-        curr_layer_size = dqn.first_hidden_layer_size
-        dims.append(cur_layer_size)
-        layers.append(nn.Linear(state_dim, cur_layer_size))
-
-        prev_layer_size = curr_layer_size
-        curr_layer_size = int(curr_layer_size / 2)
-        for i in range(1, dqn.num_hidden_layers):
-            dims.append(cur_layer_size)
-            layers.append(nn.Linear(prev_layer_size, curr_layer_size))
-            prev_layer_size = curr_layer_size
-            curr_layer_size = int(curr_layer_size / 2)
-
+        dims.append(dqn.first_hidden_layer_size)
+        for i in range(i, dqn.num_hidden_layers):
+            dims.append(int(dims[-1] / 2))
     else:
         dims = list(dqn.hidden_layers)
-        layers.append(
-            nn.Linear(state_dim, dqn.hidden_layers[0]))
 
-        # inner hidden layer: no specification of input shape
-        for i in range(1, len(dqn.hidden_layers)):
-            layers.append(
-                    nn.Linear(
-                        dqn.hidden_layers[i - 1],
-                        dqn.hidden_layers[i]))
+    layers = []
+    layers.append(nn.Linear(state_dim, dims[0]))
+    for i in range(1, len(dqn.hidden_layers)):
+        layers.append(nn.Linear(dims[i - 1], dims[i]))
 
     for layer in layers:
-        tensor = layer.weight.data
-        fan_in = nn.init._calculate_correct_fan(tensor, 'fan_in')
-        nn.init.uniform(
-                tensor, a=-math.sqrt(3 / fan_in), b=math.sqrt(3 / fan_in))
+        lecun_init(layer.weight.data)
         layer.bias.data.fill_(0.)
 
     return layers, dims
@@ -277,6 +265,7 @@ class DQN(Agent):
         return Q_targets
 
     def train_an_epoch(self):
+        print("HELLO")
         minibatch = parse_minibatch_to_torch_cuda(
             self.memory.rand_minibatch(self.batch_size))
         (Q_states, _states, Q_next_states_max) = \
