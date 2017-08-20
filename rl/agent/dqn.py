@@ -175,7 +175,7 @@ class DQN(Agent):
 
     def build_model(self):
         self.model = Net(self)
-        self.model.cuda()
+        torch_utils.maybe_cuda(self.model)
         return self.model
 
     def compile_model(self):
@@ -265,7 +265,6 @@ class DQN(Agent):
         return Q_targets
 
     def train_an_epoch(self):
-        print("HELLO")
         minibatch = parse_minibatch_to_torch_cuda(
             self.memory.rand_minibatch(self.batch_size))
         (Q_states, _states, Q_next_states_max) = \

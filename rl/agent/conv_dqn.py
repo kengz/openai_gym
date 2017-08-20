@@ -1,4 +1,5 @@
 from typing import List, Tuple
+
 import collections
 import math
 
@@ -94,7 +95,7 @@ def build_hidden_layers(conv_dqn) -> Tuple[List[nn.Conv2d], List[nn.Linear]]:
         dqn.lecun_init(layer.weight.data)
         layer.bias.data.fill_(0.)
 
-    return (conv_layers, fc_layers)
+    return (nn.ModuleList(conv_layers), nn.ModuleList(fc_layers))
 
 class ConvNet(nn.Module):
 
@@ -103,7 +104,7 @@ class ConvNet(nn.Module):
         self._conv_layers, self._fc_hidden_layers = \
                 build_hidden_layers(conv_dqn)
         self._output_layer = nn.Linear(
-                self._fc_hidden_layers[-1].weight.size()[1],
+                self._fc_hidden_layers[-1].weight.size()[0],
                 conv_dqn.env_spec['action_dim'])
         self._hidden_layers_activation = dqn.get_activation_fn(
                 conv_dqn.hidden_layers_activation)
@@ -111,14 +112,12 @@ class ConvNet(nn.Module):
                 conv_dqn.hidden_layers_activation)
 
     def forward(self, x):
+        x = x.permute(0, 3, 1, 2)
         for conv_layer in self._conv_layers:
-            print("input size =", x.size())
-            print("conv layer =", conv_layer)
             x = self._hidden_layers_activation(conv_layer(x))
-        x = x.view(-1, self._fc_hidden_layers.weight.size()[0])
-
-        for hidden_layer in self._fc_hidden_layers:
-            x = self._hidden_layers_activation(hidden_layer(x))
+        x = x.view(x.size()[0], -1)
+        for fc_layer in self._fc_hidden_layers:
+            x = self._hidden_layers_activation(fc_layer(x))
         return self._output_layer_activation(self._output_layer(x))
 
 
