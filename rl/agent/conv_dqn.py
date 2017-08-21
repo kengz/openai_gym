@@ -1,8 +1,9 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import collections
 import math
 
+from torch import autograd
 from torch import nn
 
 from rl import torch_utils
@@ -10,6 +11,8 @@ from rl.agent import dqn
 
 ConvSpec = collections.namedtuple(
         'ConvSpec', ['channels', 'kernel', 'stride'])
+
+NumpyType = Any
 
 def auto_architect_hidden_layers(conv_dqn):
     conv_specs = []
@@ -120,6 +123,10 @@ class ConvNet(nn.Module):
             x = self._hidden_layers_activation(fc_layer(x))
         return self._output_layer_activation(self._output_layer(x))
 
+    def predict(self, data: NumpyType) -> NumpyType:
+        predicted = self.__call__(
+                autograd.Variable(torch_utils.from_numpy(data).float()))
+        return torch_utils.to_numpy(predicted.data)
 
 class ConvDQN(dqn.DQN):
 
